@@ -1,5 +1,41 @@
 # Standalone Mono V3 compatibility probe
 
+## Experimental F03 terrain pilot
+
+The terrain detours require **x64 Mono**. The Unity Editor's bundled mono.exe
+tested for F02 is x86; instance methods returning double fail with Harmony under
+that runtime. F02's arithmetic-only route remains unchanged and validated.
+
+The tested alternative is the [official Mono 6.12.0.206 x64 package](https://www.mono-project.com/download/stable/).
+Its MSI was verified with a valid Microsoft signature and extracted into ignored
+staging without executing installer actions or installing globally. Runtime
+payloads are not included in Git. A custom embedding host attempted during
+diagnosis was blocked by Windows security and abandoned; no exclusion or bypass
+was used. The official executable passes both HarmonyX and Lib.Harmony minimal
+double-return patch/unpatch checks.
+
+```powershell
+./Prepare-Terrain.ps1 -BaseBootstrap .local/prepared -Output .local/new-terrain
+./Run-TerrainPilot.ps1 -Mono path/to/mono-x64/bin/mono.exe -Bootstrap .local/new-terrain -Reference path/to/capture-0.1.3 -Output .local/new-terrain-run
+```
+
+The runner scopes MONO_PATH to that runtime's class libraries and uses
+`--optimize=-float32`. This flag is necessary for base-noise parity; the default
+x64 arithmetic retains the earlier 8,067 base-height differences. Explicit
+float32 boundaries in the primitive candidates remain necessary as well.
+
+The terrain bootstrap changes only copied Perlin/RNG bindings to NativeBridge,
+uses original game formulas and the real WorldGeneratorPatch/DynamicPatch paths,
+and invokes actual HeightmapBuilder.Build synchronously with its real request
+constructor. It does not start the builder thread or reproduce its blend formula.
+Two runs match all 12,675 pilot biomes and surface values exactly. This is a pilot,
+not CA-04/global parity acceptance: full static-patch coverage, twelve-map output
+and water classification remain pending. Logs still contain unresolved Quaternion
+binding warnings while vegetation patch methods are prepared; these are not
+silenced with synthetic rotations and must be addressed if a required path uses them.
+Native failures in experimental modes retain logs/exit codes without Windows
+crash dialogs. Original DLLs and the game profile are unchanged.
+
 F03 investigation: `UnityIntegerRandomCandidate.cs` and `UnityPerlinCandidate.cs`
 are separate candidates, not wired into the terrain worker or Unity's APIs.
 Capture 0.1.3 validates 625 Perlin outputs, 1,024 RNG outputs and 4,128 state words
