@@ -13,7 +13,7 @@ using BC = BetterContinents.BetterContinents;
 namespace SeedPreviewerReference
 {
     // Development only. No terrain patches, world creation, saves, or automatic captures.
-    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.1.2")]
+    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.1.3")]
     [BepInDependency("BetterContinents")]
     public sealed class Plugin : BaseUnityPlugin
     {
@@ -55,6 +55,7 @@ namespace SeedPreviewerReference
                 var settings = new List<string>();
                 BC.Settings.Dump(settings.Add);
                 File.WriteAllLines(Path.Combine(output, "effective-settings.txt"), settings);
+                File.WriteAllText(Path.Combine(output,"native-primitives.json"),ReferenceJson.Serialize(NativeReference.Capture()));
                 var probes = new List<object>();
                 foreach (float x in new[] { -1000.25f, 0.125f, 53.875f })
                 foreach (float z in new[] { -87.5f, 0.75f, 400.25f })
@@ -110,15 +111,16 @@ namespace SeedPreviewerReference
                     settingsSha256 = Hash(Path.Combine(output, "effective-settings.txt")),
                     pointsSha256 = Hash(Path.Combine(output, "points.tsv")),
                     precisionSha256 = Hash(Path.Combine(output, "precision-trace.json")),
-                    captureVersion = "0.1.2",
+                    nativeSha256 = Hash(Path.Combine(output,"native-primitives.json")),
+                    captureVersion = "0.1.3",
                     coordinates = "Explicit X/Z metres; zone nodes row-major +X, then +Z; surface from HeightmapBuilder, no player terrain edits",
-                    water = "Not captured: water-level parity remains pending. Do not classify land/water from this pilot.",
+                    water = "Ocean baseline in native-primitives.json; per-point volume coverage and water parity remain pending.",
                     perlin = probes, random,
                     randomSequence = "four Range(-10000,10000), two Range(Int32.MinValue,Int32.MaxValue), one Range(-10000,10000); original state restored",
                     plugins = BepInEx.Bootstrap.Chainloader.PluginInfos.Values.Select(p => new { guid = p.Metadata.GUID, version = p.Metadata.Version.ToString() }).ToArray()
                 }));
                 Logger.LogInfo("Reference pilot captured. Output is under BepInEx/seed-previewer-reference. Review before sharing.");
-                if (global::Console.instance != null) global::Console.instance.Print("Reference pilot captured (precision trace included).");
+                if (global::Console.instance != null) global::Console.instance.Print("Reference pilot captured (precision and native probes included).");
             }
             finally { busy = false; }
         }

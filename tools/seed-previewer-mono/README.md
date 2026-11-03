@@ -1,5 +1,21 @@
 # Standalone Mono V3 compatibility probe
 
+F03 investigation: `UnityIntegerRandomCandidate.cs` and `UnityPerlinCandidate.cs`
+are separate candidates, not wired into the terrain worker or Unity's APIs.
+Capture 0.1.3 validates 625 Perlin outputs, 1,024 RNG outputs and 4,128 state words
+exactly under the tested Mono. Explicit float32 storage is necessary; the naive
+algebraically equivalent expressions differ. `NativeFloat` uses a stack union
+and no-inlining to preserve that boundary without allocating per operation.
+This establishes parity only over the captured primitive domain, not all inputs
+or terrain. The Perlin candidate is an inferred absolute-coordinate 3D slice
+with explicit normalization; it is not a published Unity native implementation.
+
+`Verify-ConstructorRandom.ps1 -Reference <pilot> -Output <new-local-json>` repeats
+the original 21-call check. `Verify-Native.ps1 -Mono <mono> -Reference <capture-0.1.3>
+-Output <new-local-directory>` validates hashes/build/float encodings and creates
+fixtures, then executes candidate comparison under Mono. See `comparison.json`.
+Algorithm investigation: [original RNG experiment](https://gist.github.com/macklinb/a00be6b616cbf20fa95e4227575fe50b).
+
 Mono worker for the integrated F02 entry point `../seed-previewer/Run-Preview.ps1`.
 This invokes the actual Better Continents V3
 base-height prefix, including edge and center branches, under an installed Mono

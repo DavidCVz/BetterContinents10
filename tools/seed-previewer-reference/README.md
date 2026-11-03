@@ -1,5 +1,19 @@
 # In-game reference pilot — development only
 
+Current capture version: **0.1.3**, exercised in the directed game test.
+It adds `native-primitives.json` and `nativeSha256` to the existing pilot:
+625 Perlin samples (signed coordinates, lattice boundaries and fractions), eight
+seeded RNG sequences with initial/step state bits, integer/float/equal/reversed
+ranges and `Random.value`, plus the live ZoneSystem ocean water baseline.
+The RNG state is restored in finally without yielding. This does not capture
+per-point water-volume coverage or establish land/water fidelity.
+
+Use the same disposable world and `sp_reference_pilot`. Success now prints
+`Reference pilot captured (precision and native probes included).`
+The 0.1.2 results below remain historical evidence. The 0.1.3 capture passed hash
+and build checks and preserves the same prior points/settings/precision hashes.
+Its native samples support the new candidate checks, not full terrain acceptance.
+
 Status: reference plugin 0.1.2 was exercised in-game, including its shared
 float-bit diagnostics. The new capture passed integrity and build-identity checks;
 its 12,675 terrain samples match the earlier pilots exactly. This is a validation

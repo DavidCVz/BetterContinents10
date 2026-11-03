@@ -17,6 +17,7 @@ static class Entry
     static int Main(string[] args)
     {
         try {
+            if(args.Length==3 && args[0]=="--verify-native")return NativeCandidateVerification.Run(args[1],args[2]);
             if(args.Length!=5 && args.Length!=6 && args.Length!=7) throw new ArgumentException("Expected repo, bootstrap directory, preset name, seed, new output directory, optional pilot directory.");
             args[0]=Path.GetFullPath(args[0]); args[1]=Path.GetFullPath(args[1]); args[4]=Path.GetFullPath(args[4]);
             if(!new[]{"Continents","Pangaea","Swirls","Vanillaish"}.Contains(args[2]) || args[3].Length<1 || args[3].Length>10 || !args[3].All(c=>c<128&&char.IsLetterOrDigit(c))) throw new ArgumentException("Unsupported preset or seed.");
