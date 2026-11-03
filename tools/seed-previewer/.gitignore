@@ -1,0 +1,9 @@
+.local/
+# Generated diagnostics can contain local paths; keep them out of source control.
+*.log
+*.local.txt
+*.f32
+height-base.png
+manifest.json
+effective-settings.txt
+default-config.json

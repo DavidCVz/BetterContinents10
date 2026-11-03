@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net4.8</TargetFramework>
+    <LibsTools Condition="'$(LibsTools)' == ''">$(MSBuildThisFileDirectory)..\libs-Tools\</LibsTools>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>preview</LangVersion>
     <nullable>enable</nullable>
@@ -16,85 +17,85 @@
   </Target>
   <ItemGroup>
     <Reference Include="BepInEx">
-      <HintPath>..\libs-Tools\BepInEx.dll</HintPath>
+      <HintPath>$(LibsTools)BepInEx.dll</HintPath>
     </Reference>
     <!-- The game's own netstandard 2.1 facade. Valheim's Unity 6 modules (ImageConversionModule and
          friends) are built against netstandard 2.1; net4.8 only supplies the 2.0 facade, so without this
          the build fails with CS1705 "uses netstandard 2.1.0.0 which has a higher version than referenced
          assembly netstandard 2.0.0.0". -->
     <Reference Include="netstandard">
-      <HintPath>..\libs-Tools\netstandard.dll</HintPath>
+      <HintPath>$(LibsTools)netstandard.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\libs-Tools\UnityEngine.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\libs-Tools\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>..\libs-Tools\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\libs-Tools\UnityEngine.UI.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
-      <HintPath>..\libs-Tools\UnityEngine.UIModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.UIModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
-      <HintPath>..\libs-Tools\UnityEngine.AssetBundleModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule">
-      <HintPath>..\libs-Tools\UnityEngine.ImageConversionModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.ImageConversionModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>..\libs-Tools\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.TextRenderingModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>..\libs-Tools\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>..\libs-Tools\UnityEngine.PhysicsModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
     <!-- The lake sound (LakeSound): an AudioSource with the game's ocean loop. -->
     <Reference Include="UnityEngine.AudioModule">
-      <HintPath>..\libs-Tools\UnityEngine.AudioModule.dll</HintPath>
+      <HintPath>$(LibsTools)UnityEngine.AudioModule.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>..\libs-Tools\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>$(LibsTools)Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="gui_framework">
-      <HintPath>..\libs-Tools\gui_framework.dll</HintPath>
+      <HintPath>$(LibsTools)gui_framework.dll</HintPath>
     </Reference>
     <Reference Include="0Harmony">
-      <HintPath>..\libs-Tools\0Harmony.dll</HintPath>
+      <HintPath>$(LibsTools)0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="assembly_valheim">
-      <HintPath>..\libs-Tools\assembly_valheim.dll</HintPath>
+      <HintPath>$(LibsTools)assembly_valheim.dll</HintPath>
       <Publicize>true</Publicize>
       <Private>false</Private>
     </Reference>
     <Reference Include="assembly_utils">
-      <HintPath>..\libs-Tools\assembly_utils.dll</HintPath>
+      <HintPath>$(LibsTools)assembly_utils.dll</HintPath>
       <Publicize>true</Publicize>
       <Private>false</Private>
     </Reference>
     <!-- Settings Transfer Rate (07 BetterContinents.Misc): SteamNetworkingUtils.SetConfigValue raises this connection's Steam send rate while its Better Continents settings transfer runs, then restores it. -->
     <Reference Include="steamworks.net">
-      <HintPath>..\libs-Tools\steamworks.net.dll</HintPath>
+      <HintPath>$(LibsTools)steamworks.net.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="assembly_guiutils">
-      <HintPath>..\libs-Tools\assembly_guiutils.dll</HintPath>
+      <HintPath>$(LibsTools)assembly_guiutils.dll</HintPath>
       <Publicize>true</Publicize>
       <Private>false</Private>
     </Reference>
     <Reference Include="SoftReferenceableAssets">
-      <HintPath>..\libs-Tools\SoftReferenceableAssets.dll</HintPath>
+      <HintPath>$(LibsTools)SoftReferenceableAssets.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Splatform">
-      <HintPath>..\libs-Tools\Splatform.dll</HintPath>
+      <HintPath>$(LibsTools)Splatform.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

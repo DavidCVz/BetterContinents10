@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LibsTools Condition="'$(LibsTools)' == ''">$(MSBuildThisFileDirectory).local/libs/</LibsTools>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Same offline substitution used by upstream's tools; HarmonyX cannot initialize here. -->
+    <PackageReference Include="Lib.Harmony" Version="2.3.6" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" />
+    <Reference Include="BetterContinents"><HintPath>../../obj/Release/net4.8/BetterContinents.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_valheim"><HintPath>$(LibsTools)assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_utils"><HintPath>$(LibsTools)assembly_utils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="BepInEx"><HintPath>$(LibsTools)BepInEx.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(LibsTools)UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Target Name="CheckDependencies" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(LibsTools)UnityEngine.CoreModule.dll')" Text="Missing UnityEngine.CoreModule.dll. Run Prepare.ps1 with local game and BepInEx paths." />
+  </Target>
+</Project>
