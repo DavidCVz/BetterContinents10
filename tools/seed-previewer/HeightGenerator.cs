@@ -15,7 +15,7 @@ internal static class HeightGenerator
     const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static int Run(string[] paths, string seed, int size, string output)
+    internal static int Run(string[] paths, string seed, int size, string output, string? reference = null)
     {
         if (Directory.Exists(output) || File.Exists(output)) throw new IOException("Output must be a new directory.");
         var mod = AssemblyLoadContext.Default.LoadFromAssemblyPath(paths[1]);
@@ -40,6 +40,24 @@ internal static class HeightGenerator
         var shipped = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../assets/BCAssets/Presets", Path.GetFileName(paths[3])));
         if (!File.ReadAllBytes(paths[3]).SequenceEqual(File.ReadAllBytes(shipped)))
             throw new NotSupportedException("Preset bytes differ from the shipped fixture.");
+
+        int presetVersion = settings.Version;
+        settings.Dump(line => File.AppendAllText(Path.Combine(output, "before-save-settings.txt"), line + Environment.NewLine));
+        var beforeFloats = FloatSnapshot(settings);
+        // NewWorldBuild.Make -> Bytes -> Serialize(network:false), then LoadFromSource -> Load(ZPackage).
+        // Reproduce the actual managed codec without touching a player's world or invoking FileHelpers.
+        var package = new ZPackage();
+        settings.Serialize(package, false);
+        var savedBytes = package.GetArray();
+        File.WriteAllBytes(Path.Combine(output, "saved-settings.bin"), savedBytes);
+        settings = BC.BetterContinentsSettings.Load(new ZPackage(savedBytes));
+        File.WriteAllText(Path.Combine(output, "settings-lifecycle.json"), JsonSerializer.Serialize(new
+        {
+            presetVersion, loadedVersion = settings.Version,
+            beforeFloats, afterFloats = FloatSnapshot(settings),
+            savedPackageSha256 = Convert.ToHexString(SHA256.HashData(savedBytes)),
+            loadedAltBiomesStored = settings.AltBiomes != null
+        }, new JsonSerializerOptions { WriteIndented = true }));
 
         BC.Settings = settings;
         typeof(BC).GetMethod("UpdateGeometry", All)!.Invoke(null, null);
@@ -73,6 +91,16 @@ internal static class HeightGenerator
         typeof(WorldGenerator).GetMethod("VersionSetup", All)!.Invoke(setup, new object[] { 2 });
         minMountainDistance = (float)mountainField.GetValue(setup)!;
 
+        if (reference != null) File.WriteAllText(Path.Combine(output, "precision-trace.json"), JsonSerializer.Serialize(
+            SeedPreviewerDiagnostics.PrecisionTrace.Capture((x, z) => {
+                float value = 0;
+                BC.WorldGeneratorPatch.GetBaseHeightPrefixV3(ref x, ref z, ref value, minMountainDistance);
+                return value;
+            }), new JsonSerializerOptions { WriteIndented = true }));
+
+        if (reference != null)
+            return BaseReferenceComparison.Run(reference, output, seed, numericSeed, settings, minMountainDistance, paths);
+
         float total = BC.TotalSize;
         var values = new float[size * size];
         float min = float.MaxValue, max = float.MinValue;
@@ -102,7 +130,7 @@ internal static class HeightGenerator
         File.WriteAllText(Path.Combine(output, "manifest.json"), JsonSerializer.Serialize(new
         {
             status = "base-height-only-unvalidated-against-game", seed, numericSeed, size, totalSizeMetres = total,
-            preset = Path.GetFileName(paths[3]), presetSha256 = Hash(paths[3]), settingsVersion = settings.Version,
+            preset = Path.GetFileName(paths[3]), presetSha256 = Hash(paths[3]), presetVersion, settingsVersion = settings.Version,
             modVersion = BetterContinents.ModInfo.Version, modSha256 = Hash(paths[1]), worldGenerationVersion = 2,
             gameSha256 = Hash(Path.Combine(paths[0], "assembly_valheim.dll")), hashAssemblySha256 = Hash(hashMethod.Module.Assembly.Location),
             seedHashMethod = hashMethod.ToString(), runtime = Environment.Version.ToString(), minMountainDistance,
@@ -117,6 +145,13 @@ internal static class HeightGenerator
     }
 
     static string Hash(string path) => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+    static object FloatSnapshot(BC.BetterContinentsSettings settings) =>
+        settings.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance)
+            .Where(f => f.FieldType == typeof(float)).ToDictionary(f => f.Name, f =>
+            {
+                float value = (float)f.GetValue(settings)!;
+                return new { value, bits = BitConverter.SingleToInt32Bits(value).ToString("X8") };
+            });
     static int StableHash(string text)
     {
         unchecked

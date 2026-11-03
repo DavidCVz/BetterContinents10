@@ -7,3 +7,10 @@ height-base.png
 manifest.json
 effective-settings.txt
 default-config.json
+before-save-settings.txt
+saved-settings.bin
+settings-lifecycle.json
+base-comparison.json
+base-comparison.tsv
+precision-trace.json
+precision-comparison.json

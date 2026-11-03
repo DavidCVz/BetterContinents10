@@ -31,15 +31,18 @@ internal static class Program
             };
             AssemblyLoadContext.Default.LoadFromAssemblyPath(paths[1]);
             if (args.Length == 5 && args[4] == "--inspect-game") return GameInspector.Run(paths);
-            if (args.Length == 8 && args[4] == "--height")
+            if (args.Length == 5 && args[4] == "--diagnose-terrain") return NativeTerrainProbe.Run(paths);
+            if (args.Length == 8 && args[4] is "--height" or "--compare-base")
             {
                 if (args[5].Length is < 1 or > 10 || !args[5].All(char.IsAsciiLetterOrDigit))
                     throw new ArgumentException("This milestone supports 1-10 ASCII letters/digits for a seed.");
+                if (args[4] == "--compare-base")
+                    return HeightGenerator.Run(paths, args[5], 64, Path.GetFullPath(args[7]), Path.GetFullPath(args[6]));
                 if (!int.TryParse(args[6], out int size) || size < 64 || size > 2048)
                     throw new ArgumentException("Resolution must be between 64 and 2048.");
                 return HeightGenerator.Run(paths, args[5], size, Path.GetFullPath(args[7]));
             }
-            if (args.Length != 4) throw new ArgumentException("Expected four paths, optionally --height <seed> <resolution> <new-output-directory>.");
+            if (args.Length != 4) throw new ArgumentException("Expected four paths, optionally --height <seed> <resolution> <new-output-directory> or --compare-base <seed> <reference-directory> <new-output-directory>.");
             return ReadPreset(paths);
         }
         catch (Exception error)

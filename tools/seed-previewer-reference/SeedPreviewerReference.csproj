@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <LibsTools Condition="'$(LibsTools)' == ''">$(MSBuildThisFileDirectory)../seed-previewer/.local/libs/</LibsTools>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../seed-previewer/PrecisionTrace.cs" Link="PrecisionTrace.cs" />
+    <Reference Include="BepInEx"><HintPath>$(LibsTools)BepInEx.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(LibsTools)UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(LibsTools)UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="netstandard"><HintPath>$(LibsTools)netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_valheim"><HintPath>$(LibsTools)assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_utils"><HintPath>$(LibsTools)assembly_utils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="BetterContinents"><HintPath>../../obj/Release/net4.8/BetterContinents.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

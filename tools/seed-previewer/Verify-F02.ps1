@@ -19,13 +19,18 @@ foreach ($preset in @('Continents','Pangaea','Swirls','Vanillaish')) {
             & dotnet $probe @common "$repo/assets/BCAssets/Presets/$preset.BetterContinents" --height $seed 1024 $output *> "$evidence/$name.log"
             if ($LASTEXITCODE -ne 0) { throw "Generation failed: $name. See its log." }
             $manifest = Get-Content "$output/manifest.json" -Raw | ConvertFrom-Json
+            $lifecycle = Get-Content "$output/settings-lifecycle.json" -Raw | ConvertFrom-Json
+            if ($manifest.presetVersion -ne 7 -or $manifest.settingsVersion -ne 11 -or $lifecycle.loadedAltBiomesStored) { throw "Unexpected loaded settings: $name" }
+            foreach ($field in $lifecycle.beforeFloats.PSObject.Properties) {
+                if ($field.Value.bits -ne $lifecycle.afterFloats.($field.Name).bits) { throw "Float changed during settings codec: $name/$($field.Name)" }
+            }
             if ((Get-Item "$output/height-base.f32").Length -ne (1024 * 1024 * 4)) { throw "Invalid grid length: $name" }
             $actualHash = (Get-FileHash "$output/height-base.f32").Hash
             if ($actualHash -ne $manifest.dataSha256) { throw "Invalid manifest hash: $name" }
             $manifests += $manifest
         }
         if ($manifests[0].dataSha256 -ne $manifests[1].dataSha256) { throw "Non-deterministic grid: $preset/$seed" }
-        $rows += [pscustomobject]@{Preset=$preset; Seed=$seed; NumericSeed=$manifests[0].numericSeed; Sha256=$manifests[0].dataSha256; RepeatIdentical=$true; Min=$manifests[0].min; Max=$manifests[0].max; ElapsedMs=$manifests[0].elapsedMs; PeakMemoryBytes=$manifests[0].peakMemoryBytes}
+        $rows += [pscustomobject]@{Preset=$preset; Seed=$seed; NumericSeed=$manifests[0].numericSeed; LoadedSettingsVersion=$manifests[0].settingsVersion; Sha256=$manifests[0].dataSha256; RepeatIdentical=$true; Min=$manifests[0].min; Max=$manifests[0].max; ElapsedMs=$manifests[0].elapsedMs; PeakMemoryBytes=$manifests[0].peakMemoryBytes}
         Write-Output "PASS $preset / ${seed}: 1024 x 1024, identical across two processes"
     }
 }
