@@ -1,9 +1,9 @@
 # In-game reference pilot — development only
 
-Status: reference plugin 0.1.1 was exercised in-game. Version 0.1.2 adds shared
-float-bit diagnostics; it is compiled and offline-tested, pending its first real
-precision capture. This is a validation tool, not an offline generator or a
-solution to the native binding gate.
+Status: reference plugin 0.1.2 was exercised in-game, including its shared
+float-bit diagnostics. The new capture passed integrity and build-identity checks;
+its 12,675 terrain samples match the earlier pilots exactly. This is a validation
+tool, not an offline generator or a solution to the native binding gate.
 
 Build after `../seed-previewer/Prepare.ps1` has prepared the dependencies:
 
@@ -15,7 +15,7 @@ Use the same workspace-local NuGet/CLI cache as the preparation script if needed
 The only output to deploy for this tool is `bin/Release/net48/SeedPreviewerReference.dll`.
 It relies on the game's BepInEx and Better Continents; do not copy reference/game DLLs.
 
-## Pilot procedure (pending execution)
+## Pilot procedure
 
 1. Use a disposable test profile and a separate save directory with Valheim 1.0.21,
    BepInEx and the Better Continents build from the same source used by the offline
@@ -33,7 +33,7 @@ It relies on the game's BepInEx and Better Continents; do not copy reference/gam
 5. A completed `manifest.json` marks a successful capture. Validate coordinates and
    heights against known terrain, match settings and seed to the offline manifest,
    and inspect all errors before using the data as a reference. No success manifest
-   is written after a failure. The added precision capture still requires in-game validation.
+   is written after a failure. A valid capture does not establish offline parity.
 6. Remove the probe DLL after capture. The plugin does not patch generation, create
    worlds, place objects, modify terrain or explicitly save worlds. Normal game
    activity still saves the disposable test world.
@@ -77,3 +77,17 @@ The same observer runs under .NET 10 and standalone Mono for stage-by-stage bit
 comparison. Observation calls add call/storage boundaries; the actual generator
 result remains authoritative. The observer's final arithmetic stages are not a
 claim to reproduce all game rounding behavior. This test determines where they differ.
+
+The exercised trace contains 18 nodes. Against the game, .NET 10 differs in 560 of
+890 float observations; the restricted standalone Mono audit differs in 5 of 872
+shared observations and lacks the 18 real final callbacks. Its first observed
+residual is in layer 3 filtering at `(1009, -480)`, with matching observed raw noise
+and normalization parameters. These are diagnostic counts, not acceptance scores.
+Exact offline equivalence remains unresolved; water is still absent.
+
+A subsequent local Mono experiment inserted an explicit float32 conversion after
+the raw noise call in a disposable mod DLL copy. It matched all 12,675 pilot base
+heights and all 872 shared trace observations, repeated in another process and
+checked with the .NET parser. The same conversion leaves the .NET 10 discrepancies
+unchanged. This restricted experiment does not invoke the full production V3
+method and does not establish a supported Mono generator or general parity.

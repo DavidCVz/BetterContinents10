@@ -147,8 +147,12 @@ distribution DLL and offline pre-ILRepack DLL are different artifacts from the s
 build; both identities must be preserved, not compared as identical byte streams.
 
 Current measured .NET 10 residual against the real pilot is at most about 0.113 mm
-in base height. A local, restricted Mono noise audit reduced it but did not fully
-eliminate it. Exact base-height equivalence is therefore still pending; this does
+in base height. A local, restricted Mono noise audit initially reduced it; adding
+an explicit float32 conversion after the raw noise call in a disposable DLL copy
+then eliminated it at all 12,675 pilot nodes, with an identical separate-process
+repeat. That change does not eliminate the .NET 10 residual. This is a diagnostic
+Mono experiment, not a production V3 implementation or an adopted runtime change.
+Exact base-height equivalence of the .NET prototype is therefore still pending; this does
 not establish biome, final-surface or water fidelity. The 24-run matrix remains
 deterministic after applying the real settings round trip.
 
@@ -164,8 +168,9 @@ biome map is emitted. On the validated .NET 10 environment, all four probes fail
 with `SecurityException: ECall methods must be packaged into a system module.`
 
 The in-game capture tool is in `../seed-previewer-reference/`. Its initial pilot
-was exercised in-game; version 0.1.2 adds precision observations that still need a
-new real capture. F03 remains partial: native adaptation and full parity are pending.
+was exercised in-game, including the precision observations added in version
+0.1.2. The new pilot passed integrity checks and reproduced the earlier terrain
+samples. F03 remains partial: native adaptation and full parity are pending.
 
 No synthetic terrain, native-noise emulation or generation patches are installed.
 Preset loading and V3 base-height repeatability are proven. Native random offsets,
@@ -196,3 +201,16 @@ The comparator rejects mismatched formats, coordinate order, settings versions a
 layer counts; it reports missing observations separately. Match the enclosing
 capture manifests and hashes before using this diagnostic. It does not grant
 generation acceptance or apply a numerical tolerance.
+
+## Full V3 Mono compatibility experiment
+
+The separate `../seed-previewer-mono/` probe now invokes the real V3 prefix under
+Mono, using explicit local bootstrap copies. Its complete pilot matches 12,675
+base heights and all 890 trace observations, including actual final callbacks.
+Twenty-four processes generated twelve distinct 1024² grids with identical hashes
+for each repeated seed/preset pair. Behavioral edge/center checks also passed.
+
+This does not change this .NET CLI's runtime or results. The Mono probe remains
+experimental pending integration and provenance controls; it does not resolve
+biomes, final surface, water, or full-world game fidelity. See its README for the
+two exact bootstrap adaptations and reproduction instructions.

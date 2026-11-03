@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../seed-previewer/PrecisionTrace.cs" Link="PrecisionTrace.cs" />
+    <Compile Include="../seed-previewer-reference/ReferenceJson.cs" Link="ReferenceJson.cs" />
+    <Reference Include="BetterContinents"><HintPath>../../obj/Release/net4.8/BetterContinents.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="BepInEx"><HintPath>../seed-previewer/.local/libs/BepInEx.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>../seed-previewer/.local/libs/UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>../seed-previewer/.local/libs/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_valheim"><HintPath>../seed-previewer/.local/libs/assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_utils"><HintPath>../seed-previewer/.local/libs/assembly_utils.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>
