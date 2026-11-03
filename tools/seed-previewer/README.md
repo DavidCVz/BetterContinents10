@@ -210,7 +210,35 @@ base heights and all 890 trace observations, including actual final callbacks.
 Twenty-four processes generated twelve distinct 1024² grids with identical hashes
 for each repeated seed/preset pair. Behavioral edge/center checks also passed.
 
-This does not change this .NET CLI's runtime or results. The Mono probe remains
-experimental pending integration and provenance controls; it does not resolve
+This does not change this .NET CLI's runtime or results. The Mono worker is integrated with provenance controls through the entry point below; it does not resolve
 biomes, final surface, water, or full-world game fidelity. See its README for the
 two exact bootstrap adaptations and reproduction instructions.
+
+## Integrated F02 entry point (recommended for base height)
+
+`Run-Preview.ps1` runs the Mono worker and the .NET image exporter as separate
+processes. Build both projects first, using the local caches described above.
+Prepare a **new** bootstrap directory with the tested Mono executable:
+
+```powershell
+../seed-previewer-mono/Prepare-Bootstrap.ps1 -Output ../seed-previewer-mono/.local/prepared -Mono $Mono
+./Run-Preview.ps1 -Mono $Mono -Bootstrap ../seed-previewer-mono/.local/prepared -Preset Continents -Seed AbC123 -Resolution 1024 -Output .local/preview
+# Optional: -Reference path/to/validated-Continents-AbC123-capture
+./Verify-Mono.ps1 -Mono $Mono -Bootstrap ../seed-previewer-mono/.local/prepared -Reference path/to/capture -Evidence .local/new-matrix
+```
+
+The entry point rejects stale original/adapted assemblies or changed runtime
+identity. Reference mode validates capture hashes, game/build, plugins, unique
+zone coordinates, numeric seed and exact effective settings. It checks sampled
+float bits again with the .NET parser and reports maximum/mean error per zone.
+The only captured pilot currently supported is Continents/AbC123.
+
+Outputs include `height-base.f32`, a 16-bit grayscale `height-base.png`, settings
+dump/package/lifecycle, the actual V3 precision trace, and a completion
+`manifest.json` containing runtime/build/preset hashes and coordinate semantics.
+`generation.json` alone is intermediate worker evidence. Failed runs may leave
+partial outputs but do not publish a completion manifest for incompatible input.
+A valid reference with numerical discrepancies is explicitly marked and reported
+as an error, without applying tolerance. F02 acceptance covers base height and
+repeatability; this does not validate biomes, final surface, water or world-wide
+fidelity. Generated outputs must stay local and be reviewed before sharing.

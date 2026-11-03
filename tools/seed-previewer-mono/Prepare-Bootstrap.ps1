@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$Output)
+param([Parameter(Mandatory)][string]$Output, [string]$Mono)
 $ErrorActionPreference='Stop'
 $repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 if(Test-Path -LiteralPath $Output){throw 'Output must be a new directory.'}
@@ -36,3 +36,9 @@ foreach($item in @(@((Join-Path $repo 'obj/Release/net4.8/BetterContinents.dll')
   } finally {$a.Dispose()}
 }
 $records|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $Output 'bootstrap.json')
+if($Mono){
+  & $Mono --version *> (Join-Path $Output 'mono-version.local.log')
+  if($LASTEXITCODE){throw 'Mono runtime check failed.'}
+  $dependencies=@{};foreach($name in @('assembly_valheim.dll','UnityEngine.CoreModule.dll','BepInEx.dll')){$dependencies[$name]=(Get-FileHash (Join-Path $libs $name)).Hash}
+  [pscustomobject]@{MonoSha256=(Get-FileHash -LiteralPath $Mono).Hash;DistributionSha256=(Get-FileHash (Join-Path $repo 'bin/Release/net4.8/BetterContinents.dll')).Hash;Dependencies=$dependencies}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $Output 'runtime.json')
+}

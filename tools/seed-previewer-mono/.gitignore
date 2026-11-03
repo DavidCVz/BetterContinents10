@@ -3,3 +3,6 @@
 *.tsv
 *.f32
 *.json
+saved-settings.bin
+effective-settings.txt
+height-base.png

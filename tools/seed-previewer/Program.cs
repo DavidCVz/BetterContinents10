@@ -12,6 +12,7 @@ internal static class Program
     {
         try
         {
+            if (args.Length == 4 && args[0] == "--render-base") return BaseImage.Run(args[1], args[2], args[3]);
             if (args.Length < 4)
                 throw new ArgumentException("Usage: SeedPreviewer <libs-directory> <mod-dll> <mod-dependencies-directory> <preset-file>");
             var paths = args.Take(4).Select(Path.GetFullPath).ToArray();
