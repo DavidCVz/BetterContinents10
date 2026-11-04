@@ -12,6 +12,14 @@ internal static class Program
     {
         try
         {
+            if(args.Length==1&&args[0]=="--check-cartographic-renderer")return CartographicChecks.Run();
+            if(args.Length==4&&args[0]=="--check-cartographic-output")return CartographicChecks.CheckOutput(args[1],args[2],args[3]);
+            if(args.Length>0&&args[0]=="--render-map"){
+                if(args.Length!=3&&(args.Length!=5||args[3]!="--style"))throw new ArgumentException("Usage: --render-map <M1-bundle-root> <new-output> [--style <style.json>]");
+                return CartographicRenderer.Run(args[1],args[2],args.Length==5?args[4]:null);
+            }
+            if(args.Length==1&&args[0]=="--check-cartography")return CartographicSample.CheckGeometry();
+            if(args.Length==3&&args[0]=="--render-map-sample")return CartographicSample.Run(args[1],args[2]);
             if(args.Length==2&&args[0]=="--render-terrain")return TerrainImages.Run(args[1]);
             if (args.Length == 4 && args[0] == "--render-base") return BaseImage.Run(args[1], args[2], args[3]);
             if (args.Length < 4)

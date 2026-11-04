@@ -1,4 +1,115 @@
-# Seed Previewer — F02 real base-height prototype
+# Seed Previewer — offline probes and cartographic renderer
+
+## Reproducible cartography (milestone 2 / F02)
+
+From this tool directory, after building:
+
+```powershell
+dotnet bin/Release/net10.0/SeedPreviewer.dll --render-map <M1-bundle-root> <new-output>
+dotnet bin/Release/net10.0/SeedPreviewer.dll --render-map <M1-bundle-root> <another-new-output> --style <style.json>
+```
+
+This path reads existing numerical layers only. It does not initialize a world,
+invoke Mono, open Valheim or require another capture. The input is a complete
+`Run-TerrainMap.ps1` bundle with `manifest.json` and its `map/` directory, not a PNG
+or a bare map directory. Supported contracts are the four M1 presets, 1-10 ASCII
+alphanumeric seed characters, 64-2048 pixels, north-first pixel centers, metre
+heights and the static 30 m ocean plane. Layer hashes, exact dimensions, finite
+heights, known biome IDs, water values and height/mask agreement are checked.
+Missing, damaged or inconsistent inputs fail with exit 1.
+
+The destination must be new and outside the input bundle. Successful output:
+
+- `map.png`: RGBA8 composite with metric relief, depth, shoreline and land-biome fade.
+- `style-used.json`: full effective recipe, including defaults.
+- `legend.md` / `legend.json`: palette, units, depth ramp and interpretation limits.
+- `render-manifest.json`: completion marker, input manifest/layer hashes, effective
+  style hash, renderer and image-library hashes, .NET runtime, PNG/metadata hashes
+  and decoded row-major RGBA hash. No absolute input/output paths are recorded.
+
+Files are prepared in a uniquely named sibling `.partial-*` directory and the
+complete directory is renamed into place. An existing destination is never
+replaced. A failure during export leaves an unpublished partial directory with a
+failure marker; use a new destination for a retry. Invalid input/style is rejected
+before creating the render directory. Original data and diagnostic PNGs are kept.
+
+Styles use format `sp-cartographic-style/1`. Omitted properties use fixed defaults;
+unknown/duplicate properties, invalid types/ranges and non-`#RRGGBB` colors fail.
+Copy an exported `style-used.json` to adjust the complete recipe, or use a partial
+style such as:
+
+```json
+{"format":"sp-cartographic-style/1","fadeMetres":120,"exaggeration":1.5,"transparent":true}
+```
+
+The default is 120 m nominal land-biome fade, 3x visual relief, NW light (azimuth
+315 degrees in X/Z, altitude 45), ambient 0.48/diffuse 0.74, circular crop and
+opaque `#101923` background. `exaggeration` changes illumination only. Set
+`fadeMetres: 0` for hard category colors; `circular: false` exports the full square.
+`transparent: true` uses circular alpha instead of the background. Depth colors
+interpolate from `shallow` to `shelf` over 35 m, then to `deep` over another 180 m;
+these distances are fixed style values, not per-map normalization.
+
+Fade diffuses RGB and the snow-tint weight on the four-neighbor land graph. A
+water edge is never crossed, even between nearby disconnected islands. No biome
+ID, height or mask is interpolated or changed. The width means the nominal
+10%-90% transition across a straight boundary: sigma = width / 2.563103, in
+metres. Raster spacing and land topology affect the measured width; narrow
+connected land regions can mix more than one neighboring color. The explicit
+diffusion step is at most 0.2 and the work limit is 128 steps. Excessive width at
+the requested spacing is rejected, never silently clamped.
+
+Numeric limits: fade 0-500 m (subject to that work limit), exaggeration 0-8,
+azimuth 0-360, altitude 1-90, ambient/diffuse/shoreTint 0-1, shelfDepth 0.1-1000 m,
+deepRange 0.1-2000 m and shoreHeight 0.1-100 m. If `palette` is supplied, include
+exactly IDs 1, 2, 4, 8, 16, 32, 64, 256 and 512; names/colors are in the legend.
+The other color fields are shallow, shelf, deep, sand, snow and background.
+
+This is **base terrain**: forest density, lava/moss masks and alt-biome visual
+overrides remain in milestone 2 / F03. Blended colors are presentation, not a
+categorical biome query or tree/object map. No decorative terrain noise is added.
+
+Verification (output must be new):
+
+```powershell
+dotnet bin/Release/net10.0/SeedPreviewer.dll --check-cartographic-renderer
+./Verify-Cartography.ps1 -Bundle <Continents-bundle> -SecondBundle <Swirls-bundle> -Output <new-evidence>
+# Optional: -SampleBaseline <F01-Continents-sample-directory>
+```
+
+The campaign uses the M1 1024px / 21000m fixtures. The script runs separate
+processes, compares every repeated output hash, verifies
+decoded pixels/manifests, checks all real water pixels against a zero-fade render,
+tests invalid inputs/styles and overwrite protection, and checks all original
+bundle files before/after. An isolated runtime copy with only the CLI, its .NET
+metadata and ImageSharp produces identical outputs without game/mod/Harmony DLLs.
+The geometric fixtures check light axes, metric fade
+at two spacings, land connectivity, snow-weight continuity and alpha; they are
+not evidence about world generation. Diagnostic M1 and optional F01 PNGs are
+also compared by hash. Determinism is verified in the tested runtime/encoder
+environment, not promised across arbitrary library or runtime versions.
+
+The historical .NET base-height probe is documented below. The supported full
+terrain route from milestone 1 is `../seed-previewer-mono/Run-TerrainMap.ps1`;
+rendering its existing bundles is independent of that worker.
+
+## Cartographic visual sample (milestone 2 / F01)
+
+`dotnet bin/Release/net10.0/SeedPreviewer.dll --render-map-sample <M1-bundle-root> <new-output>`
+reads the existing bundle manifest and map layers, verifies source hashes, and
+produces map.png, map-soft.png, map-transparent.png and four 256px crops with
+matching categorical-biome crops. sample.json records source hashes, geometry,
+palette, lighting, crop coordinates and limitations. No world generation or game
+process is invoked. `--check-cartography` checks metric gradients and light axes.
+
+This visual direction was approved for F01; the general renderer and land-biome
+color transitions are now available through `--render-map` above. The historical
+sample keeps its original hard boundaries. It uses a fixed palette, metric hillshade (NW light), static
+ocean depth, a height-based shore tint and a circular display crop derived from
+the recorded span. Sources stay unchanged. Green/dark terrain is biome coloring,
+not extracted forest density; lava/moss masks and alt-biome visual overrides
+are pending separate work. The two relief variants use 3x/1.5x visual vertical
+exaggeration only. Raw heights are never exaggerated or regenerated.
 
 This console can read real presets (F01) or sample real V3 base height (F02).
 It does not start Valheim, save a world, or modify player saves/configuration.
