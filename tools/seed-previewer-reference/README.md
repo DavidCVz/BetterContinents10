@@ -1,5 +1,58 @@
 # In-game reference pilot — development only
 
+## F04 global reference (plugin 0.2.1)
+
+Update **0.2.1** defaults to selective native capture. A Harmony reverse patch
+copies the installed HeightmapBuilder.Build body into a private stand-in and
+changes only the two row/column loop starts and ends, computing a 2x2 node cell.
+Width, scale, corner queries, formulas, float operations and masks remain native.
+The engine's Build entry point is not patched. Exactly four expected IL edits
+are required; a different loop shape fails. It does not use the offline sampler.
+Before capturing, seven full native zones verify 700 node values bitwise against
+the selective copy. Stand-in bounds are thread-local, and the cell cache is
+bounded. Capture yields on an 8ms time budget or 64 grid samples, supports cancel,
+and records mode, check count and elapsed wall time in the manifest.
+
+The first 0.2.0 full capture passed 65,645 points for Continents/AbC123, taking
+approximately 29.34 wall-clock minutes (file timestamps, potentially including
+pauses). Max surface error 0.031829833984375m, zero biome differences and zero
+water differences outside the 0.10m band; one difference inside the band among
+215 points is retained. Global acceptance for the other eleven worlds is pending.
+
+The real 0.2.1 test completed in **31,060ms** with 700 native checks. All four
+data files (65,645 points, settings, biome context and topology) match the full
+0.2.0 reference hashes exactly; the offline comparison TSV is identical too.
+The optimization is accepted for continuing the matrix, with native preflight
+checks required for every new world. Other worlds still need their own references.
+The old full route is retained
+as `sp_reference_global Continents full` for independent controls when needed.
+
+Create a disposable world for the requested preset/seed; do not change settings
+after loading. First directed test: SPF04C1, seed AbC123, preset Continents.
+Once its terrain has loaded, run `sp_reference_global Continents` in F5.
+The default uses the selective original builder body, never the sparse offline
+evaluator. It prints completed rows, yields within a frame budget, and can be cancelled with
+`sp_reference_cancel`. Keep the world/settings loaded until completion.
+
+Success: `Global reference captured (256x256 + 109 extra points).`
+Output is under BepInEx/seed-previewer-global-reference in a fresh directory.
+No complete manifest is written on cancellation/failure. No worlds are created
+or saved by this command. It supports the three planned seeds and four preset
+labels; the label is checked against actual effective settings offline.
+
+The capture adds 65,536 north-first pixel centers spanning BC.TotalSize, 50
+coastal and 50 biome-transition points, and nine center/boundary anchors. Extra
+points are chosen from reference grid neighbor differences, distributed across
+the candidate list, and refined by twelve native bisection steps. No offline
+point set or interpolation formula is shared. Triangle planes, authored catalog,
+world generation version, seed, effective settings, plugins and file hashes are
+recorded. The static ocean plane is checked at 30m; Lakes/other geometry fail.
+Reference cache is bounded to 32 zone requests; engine-ready requests are consumed.
+RNG is restored around synchronous builder requests, never across a frame yield.
+The twelve planned inputs have now passed the independent offline comparison:
+787,740 points, exact biomes and zero ocean-classification differences outside
+the band. See the Mono tool README for metrics and the scope of this validation.
+
 Extension **0.1.5** passed the directed game test. The same command
 adds `mesh-triangles.i32` (actual loaded non-LOD collision mesh indices) and
 `fractional-points.tsv` (61,440 points in the three existing zones). Heights use

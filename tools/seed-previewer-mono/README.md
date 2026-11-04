@@ -1,5 +1,79 @@
 # Standalone Mono V3 compatibility probe
 
+## F04 comparison and instrumentation
+
+The full twelve-input reference matrix now passes: 787,740 points, 100% biome
+agreement, maximum surface error 0.034149169921875m and mean error
+0.0001283873637910109m. All 785,208 points outside the +/-0.10m ocean band have
+identical classification; 2,532 are inside, with 19 differences retained. The
+surface threshold applies to every point. These results cover the tested build,
+four presets, three seeds and static unedited non-LOD mesh/ocean contract.
+The formal 36-process benchmark is tracked separately from capture durations.
+
+F04 is complete for that scope. The benchmark completed three sequential fresh
+1024² workers per input (36 runs): generation + PNG took 39.460–47.272 seconds,
+with per-input medians 39.500–47.182 seconds, preflight measured separately.
+Maximum observed OS peak working sets were 326.38MiB for the worker and
+98.33MiB for the separate renderer, sampled every 100ms and at exit when
+available. All 216 numeric/PNG files match the F03 baselines. Case-sensitive
+grouping preserves AbC123 versus abc123. Full hardware/conditions and per-phase
+measurements stay in local evidence. These timings describe this prototype on
+the measured system, not a latency target or all hardware.
+
+Recommendation: proceed to a local application around the isolated worker with
+progress/cancellation and result caching, then evaluate low-resolution preview
+and refinement. Runtime/game dependency preparation and extracted catalog inputs
+still need a product setup workflow. A web version requires separate evaluation;
+no application UI or deployment is part of this completed technical milestone.
+
+The first actual global reference (0.2.0, Continents/AbC123) passed all 65,645
+biomes with max/mean/P95 surface errors 0.031829833984375 /
+0.00011615274765289186 / 0.0003566741943359375 metres. Static ocean classification
+has zero differences outside the band; 215 points are inside, with one difference.
+Independent comparisons have identical TSV hashes. This validates one input,
+not the twelve-combination matrix or CA-08.
+
+The comparator accepts additive 0.2.1 manifests with selective/full-native mode
+and requires 700 in-game native checks for selective mode. The shared
+SelectiveTerrainBuilder used only for capture is linked into the worker to
+test its reverse-patched IL loop bounds: 300 node checks match native full
+builder bits in three pilot zones. No noise, blend or mesh interpolation code
+is shared between this reference helper and SparseSurface. F02's regression
+also passes. The actual 0.2.1 capture completed in 31,060ms with 700 native checks;
+all four captured data files match the full reference hashes, and the comparison
+TSV is identical. The selective capture route is accepted for the remaining
+eleven inputs, each still requiring its own native preflight and reference.
+
+`Compare-GlobalReference.ps1` takes `-Mono`, `-Bootstrap`, the known 0.1.5
+`-PilotReference`, new 0.2.0 global `-Reference`, `-Preset`, `-Seed`, `-Output`.
+It rejects incompatible schema/builds/preset/seed/version/hashes, then runs the
+known pilot gate before reconstructing the requested world. GlobalComparison
+checks effective settings, ocean plane and every regular-grid coordinate/anchor,
+uniqueness, finiteness and group counts. It evaluates exact reference positions
+with SparseSurface, independently of the reference's full native mesh builder.
+It reports count/max/mean/P95, biome differences and water counts/differences
+inside AND outside +/-0.10m, overall and by group. Surface tolerance is 0.10m
+everywhere; biome differences and water differences outside the band fail.
+Only a passed combination receives a final manifest. Twelve actual references
+are required for F04 acceptance; malformed synthetic input tests prove rejection
+only, and a real global reference has not yet been compared.
+
+`Measure-TerrainMaps.ps1 -Mono ... -Bootstrap ... -PilotReference ... -Output ...`
+runs 36 sequential fresh 1024² workers after a separate pilot preflight. It
+records configuration, world initialization/native audit, sampling, binary I/O,
+PNG export and process wall times, plus OS peak working set queried every 100ms
+and at exit when accessible. Worker/renderer memory peaks are separate. CPU,
+RAM, OS, runtime/worker/renderer hashes and cache conditions stay in local output;
+no user/device names or serial numbers are requested. The full run requires
+CPU/RAM read access and a closed game. `-SmokeTest` runs only one 64² process,
+explicitly labeled as insufficient for CA-08; partial hardware discovery is
+allowed only in that mode. A complete run reports median/range per combination.
+
+Sampling now buffers the three layers before binary I/O so their durations
+are measured separately (9 bytes/pixel additional buffers). Numeric files and
+PNG bytes must remain identical to the F03 baselines. Global fidelity and the
+36-run performance campaign are pending the first directed global game test.
+
 ## Experimental F03 terrain pilot
 
 ### Complete offline maps

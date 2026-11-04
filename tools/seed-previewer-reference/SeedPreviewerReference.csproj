@@ -5,6 +5,7 @@
     <LibsTools Condition="'$(LibsTools)' == ''">$(MSBuildThisFileDirectory)../seed-previewer/.local/libs/</LibsTools>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony"><HintPath>$(LibsTools)0Harmony.dll</HintPath><Private>false</Private></Reference>
     <Compile Include="../seed-previewer/PrecisionTrace.cs" Link="PrecisionTrace.cs" />
     <Reference Include="BepInEx"><HintPath>$(LibsTools)BepInEx.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine"><HintPath>$(LibsTools)UnityEngine.dll</HintPath><Private>false</Private></Reference>

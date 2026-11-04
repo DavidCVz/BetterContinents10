@@ -45,6 +45,9 @@ static class TerrainPilot
             var data=new System.Collections.Generic.Dictionary<string,HeightmapBuilder.HMBuildData>();
             foreach(var zone in zones){var centre=new UnityEngine.Vector3(zone.x*64,0,zone.y*64);var request=new HeightmapBuilder.HMBuildData(centre,64,1f,false,generator);build.Invoke(builder,new object[]{request});data.Add(zone.x+","+zone.y,request);}
             SparseSurface.Verify(generator,data,args[4]);
+            int selectiveChecks=0;
+            foreach(var entry in data){var zone=entry.Key.Split(',');selectiveChecks+=SeedPreviewerReference.SelectiveTerrainBuilder.Verify(builder,generator,new Vector2s(short.Parse(zone[0]),short.Parse(zone[1])),entry.Value);}
+            File.WriteAllText(Path.Combine(args[4],"selective-native-check.json"),SeedPreviewerReference.ReferenceJson.Serialize(new{selectiveChecks,status="bit-exact-on-tested-cells"}));
             int points=0,biomeDifferences=0;double max=0,sum=0;
             using(var writer=new StreamWriter(Path.Combine(args[4],"terrain-pilot.tsv"))){
                 writer.WriteLine("zoneX\tzoneZ\tx\tz\tbiome\tsurfaceMetres\terrorMetres");

@@ -13,11 +13,12 @@ using BC = BetterContinents.BetterContinents;
 namespace SeedPreviewerReference
 {
     // Development only. No terrain patches, world creation, saves, or automatic captures.
-    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.1.5")]
+    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.2.1")]
     [BepInDependency("BetterContinents")]
     public sealed class Plugin : BaseUnityPlugin
     {
         bool registered, busy;
+        bool cancelGlobal;
         void Update()
         {
             // m_terminalInstance is an instance property, not a static field. Use the game's console singleton.
@@ -31,6 +32,12 @@ namespace SeedPreviewerReference
                     { Logger.LogWarning("Load a disposable Better Continents test world first."); return; }
                     StartCoroutine(Capture());
                 });
+                new Terminal.ConsoleCommand("sp_reference_global", "Capture F04 global reference: sp_reference_global Continents|Pangaea|Swirls|Vanillaish", args=>{
+                    if(busy){Logger.LogWarning("Capture already running.");return;}
+                    if((args.Length!=2&&args.Length!=3)||(args.Length==3&&args[2]!="full")||!new[]{"Continents","Pangaea","Swirls","Vanillaish"}.Contains(args[1])||WorldGenerator.instance==null||ZoneSystem.instance==null||!BC.Settings.ShapesWorld){Logger.LogWarning("Load a disposable test world and specify its preset (optional: full).");return;}
+                    busy=true;cancelGlobal=false;StartCoroutine(GlobalReference.Capture(args[1],()=>cancelGlobal,()=>busy=false,args.Length==2));
+                });
+                new Terminal.ConsoleCommand("sp_reference_cancel","Cancel the global reference capture",args=>cancelGlobal=true);
                 registered = true;
                 Logger.LogInfo("Registered sp_reference_pilot.");
             }

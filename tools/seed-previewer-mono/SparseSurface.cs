@@ -63,9 +63,8 @@ sealed class SparseSurface
         foreach(var zone in zones){string key=zone.x+","+zone.y;if(grids.ContainsKey(key))continue;var request=new HeightmapBuilder.HMBuildData(new Vector3(zone.x*64,0,zone.y*64),64,1,false,generator);build.Invoke(builder,new object[]{request});grids.Add(key,request);}
         Verify(generator,grids,args[4]);
         long initializationMs=timer.ElapsedMilliseconds;int size=int.Parse(args[6]);float span=BC.TotalSize;
-        using(var heights=new BinaryWriter(File.Create(Path.Combine(args[4],"surface.f32"))))
-        using(var biomes=new BinaryWriter(File.Create(Path.Combine(args[4],"biomes.i32"))))
-        using(var water=new BinaryWriter(File.Create(Path.Combine(args[4],"below-ocean.u8")))){
+        var heights=new float[size*size];var biomes=new int[size*size];var water=new byte[size*size];
+        {
             int cachedZoneZ=int.MinValue;var cache=new Dictionary<int,SparseSurface>();
             for(int row=0;row<size;row++){
                 float z=(.5f-(row+.5f)/size)*span;int zoneZ=(int)Math.Floor(((double)z+32)/64);
@@ -74,12 +73,16 @@ sealed class SparseSurface
                     float x=((col+.5f)/size-.5f)*span;int zoneX=(int)Math.Floor(((double)x+32)/64);
                     if(!cache.TryGetValue(zoneX,out var sampler)){sampler=new SparseSurface(generator,zoneX,zoneZ);cache.Add(zoneX,sampler);}
                     float height=sampler.Sample(x,z);if(float.IsNaN(height)||float.IsInfinity(height))throw new InvalidDataException("Non-finite surface.");
-                    heights.Write(height);biomes.Write((int)generator.GetBiome(x,z));water.Write((byte)(height<30?1:0));
+                    int index=row*size+col;heights[index]=height;biomes[index]=(int)generator.GetBiome(x,z);water[index]=(byte)(height<30?1:0);
                 }
                 if(row%128==0)System.Console.WriteLine("MAP row="+row+"/"+size);
             }
         }
-        File.WriteAllText(Path.Combine(args[4],"map.json"),SeedPreviewerReference.ReferenceJson.Serialize(new{status="offline-map-not-global-game-parity",preset=args[2],seed=args[3],size,totalSizeMetres=span,orientation="north-first pixel centers",surface="unmodified non-LOD 1m triangle mesh; sparse vertex evaluation",water="below static 30m ocean plane; excludes volumes and waves",initializationMs,samplingMs=timer.ElapsedMilliseconds-initializationMs,sectorCount=world.m_biomeData.Sectors.Count,modifiedSectors=world.m_biomeData.Sectors.Count(s=>s.AltBiomes.Count>0)}));
+        long samplingMs=timer.ElapsedMilliseconds-initializationMs;var export=Stopwatch.StartNew();
+        using(var writer=new BinaryWriter(File.Create(Path.Combine(args[4],"surface.f32"))))foreach(float height in heights)writer.Write(height);
+        using(var writer=new BinaryWriter(File.Create(Path.Combine(args[4],"biomes.i32"))))foreach(int biome in biomes)writer.Write(biome);
+        File.WriteAllBytes(Path.Combine(args[4],"below-ocean.u8"),water);
+        File.WriteAllText(Path.Combine(args[4],"map.json"),SeedPreviewerReference.ReferenceJson.Serialize(new{status="offline-map-not-global-game-parity",preset=args[2],seed=args[3],size,totalSizeMetres=span,orientation="north-first pixel centers",surface="unmodified non-LOD 1m triangle mesh; sparse vertex evaluation",water="below static 30m ocean plane; excludes volumes and waves",configurationMs=Entry.ConfigurationMs,initializationMs,samplingMs,binaryExportMs=export.ElapsedMilliseconds,sectorCount=world.m_biomeData.Sectors.Count,modifiedSectors=world.m_biomeData.Sectors.Count(s=>s.AltBiomes.Count>0)}));
         return 0;
     }
 }
