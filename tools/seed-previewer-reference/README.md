@@ -1,6 +1,17 @@
 # In-game reference pilot — development only
 
-Current capture version: **0.1.3**, exercised in the directed game test.
+Current extension **0.1.4** passed its directed game test. It adds
+`biome-context.json` and its hash: authored scalar/enum/string alt-biome catalog,
+the 12,675 pilot sectors and their modifier names, readiness of the world's
+biome-sector data, and the ocean/prefab water planes with the lakes flag.
+Spawn/vegetation/location asset objects, player identifiers and save paths are
+excluded. The captured world has 32 catalog entries, 858 sectors and 37 modified
+sectors. Offline reconstruction now matches all captured sector summaries and
+pilot lookups; complete-world surface and water fidelity remain pending.
+Use the existing disposable world and command, without changing its settings.
+Success prints `Reference pilot captured (biome context included).`
+
+Previous capture version: **0.1.3**, exercised in the directed game test.
 It adds `native-primitives.json` and `nativeSha256` to the existing pilot:
 625 Perlin samples (signed coordinates, lattice boundaries and fractions), eight
 seeded RNG sequences with initial/step state bits, integer/float/equal/reversed
@@ -8,7 +19,7 @@ ranges and `Random.value`, plus the live ZoneSystem ocean water baseline.
 The RNG state is restored in finally without yielding. This does not capture
 per-point water-volume coverage or establish land/water fidelity.
 
-Use the same disposable world and `sp_reference_pilot`. Success now prints
+The 0.1.3 build used the same disposable world and `sp_reference_pilot`, printing
 `Reference pilot captured (precision and native probes included).`
 The 0.1.2 results below remain historical evidence. The 0.1.3 capture passed hash
 and build checks and preserves the same prior points/settings/precision hashes.

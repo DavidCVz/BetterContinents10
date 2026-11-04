@@ -18,7 +18,7 @@ Copy-Item -LiteralPath (Join-Path $BaseBootstrap 'BetterContinents.dll'),(Join-P
 $worker=[Mono.Cecil.AssemblyDefinition]::ReadAssembly((Join-Path $PSScriptRoot 'bin/Release/net48/MonoV3Probe.exe'),$reader)
 $bridge=$worker.MainModule.Types|Where-Object Name -eq 'NativeBridge'
 $core=[Mono.Cecil.AssemblyDefinition]::ReadAssembly((Join-Path $libs 'UnityEngine.CoreModule.dll'),$reader)
-$map=@(@('UnityEngine.Mathf','PerlinNoise','Perlin'),@('UnityEngine.Random','InitState','InitState'),@('UnityEngine.Random','RandomRangeInt','RangeInt'),@('UnityEngine.Random','Range','RangeFloat'),@('UnityEngine.Random','get_value','Value'),@('UnityEngine.Random','get_state_Injected','GetState'),@('UnityEngine.Random','set_state_Injected','SetState'))
+$map=@(@('UnityEngine.Mathf','PerlinNoise','Perlin'),@('UnityEngine.Random','InitState','InitState'),@('UnityEngine.Random','RandomRangeInt','RangeInt'),@('UnityEngine.Random','Range','RangeFloat'),@('UnityEngine.Random','get_value','Value'),@('UnityEngine.Random','get_state_Injected','GetState'),@('UnityEngine.Random','set_state_Injected','SetState'),@('UnityEngine.Debug','get_isDebugBuild','IsDebugBuild'))
 foreach($entry in $map){
   $type=$core.MainModule.Types|Where-Object FullName -eq $entry[0]
   $methods=@($type.Methods|Where-Object { $_.Name -eq $entry[1] -and ($entry[2] -ne 'RangeFloat' -or $_.ReturnType.FullName -eq 'System.Single') })

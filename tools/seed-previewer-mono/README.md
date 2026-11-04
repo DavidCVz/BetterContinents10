@@ -2,6 +2,18 @@
 
 ## Experimental F03 terrain pilot
 
+Capture 0.1.4 supplies the authored alt-biome catalog and independent live sector
+reference. BiomeContext imports only authored scalar/enum/string values, registers
+the mod's sector patches, and runs GenerateBiomePoints/GenerateSectors including
+modifier placement. It avoids the cache/save wrapper. All 858 sector summaries,
+including 37 modified sectors, and 12,675 pilot sector lookups match exactly.
+Reference heights or sector assignments are never installed in the generator.
+`terrain-context.json` records readiness, and `sector-comparison.json` records
+the comparison. This replaces the earlier prototype's empty-sector fallback.
+TerrainRow in WorldExport provides a non-LOD blending model; arbitrary raster
+centers also need an explicit
+mesh-versus-continuous-surface contract before exporting a final-surface layer.
+
 The terrain detours require **x64 Mono**. The Unity Editor's bundled mono.exe
 tested for F02 is x86; instance methods returning double fail with Harmony under
 that runtime. F02's arithmetic-only route remains unchanged and validated.
@@ -16,7 +28,7 @@ double-return patch/unpatch checks.
 
 ```powershell
 ./Prepare-Terrain.ps1 -BaseBootstrap .local/prepared -Output .local/new-terrain
-./Run-TerrainPilot.ps1 -Mono path/to/mono-x64/bin/mono.exe -Bootstrap .local/new-terrain -Reference path/to/capture-0.1.3 -Output .local/new-terrain-run
+./Run-TerrainPilot.ps1 -Mono path/to/mono-x64/bin/mono.exe -Bootstrap .local/new-terrain -Reference path/to/capture-0.1.4 -Output .local/new-terrain-run
 ```
 
 The runner scopes MONO_PATH to that runtime's class libraries and uses
@@ -24,8 +36,10 @@ The runner scopes MONO_PATH to that runtime's class libraries and uses
 x64 arithmetic retains the earlier 8,067 base-height differences. Explicit
 float32 boundaries in the primitive candidates remain necessary as well.
 
-The terrain bootstrap changes only copied Perlin/RNG bindings to NativeBridge,
-uses original game formulas and the real WorldGeneratorPatch/DynamicPatch paths,
+The terrain bootstrap changes copied Perlin/RNG bindings to NativeBridge and
+sets the standalone Debug.isDebugBuild flag to false. The latter controls
+ZLog.DevLog diagnostics in modifier placement; it supplies no terrain values.
+It uses original game formulas and the real WorldGeneratorPatch/DynamicPatch paths,
 and invokes actual HeightmapBuilder.Build synchronously with its real request
 constructor. It does not start the builder thread or reproduce its blend formula.
 Two runs match all 12,675 pilot biomes and surface values exactly. This is a pilot,
@@ -37,7 +51,7 @@ Native failures in experimental modes retain logs/exit codes without Windows
 crash dialogs. Original DLLs and the game profile are unchanged.
 
 F03 investigation: `UnityIntegerRandomCandidate.cs` and `UnityPerlinCandidate.cs`
-are separate candidates, not wired into the terrain worker or Unity's APIs.
+are wired only into the explicit copied terrain bootstrap, through NativeBridge.
 Capture 0.1.3 validates 625 Perlin outputs, 1,024 RNG outputs and 4,128 state words
 exactly under the tested Mono. Explicit float32 storage is necessary; the naive
 algebraically equivalent expressions differ. `NativeFloat` uses a stack union

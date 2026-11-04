@@ -1,6 +1,8 @@
 param([Parameter(Mandatory)][string]$Mono,[Parameter(Mandatory)][string]$Bootstrap,[Parameter(Mandatory)][string]$Reference,[Parameter(Mandatory)][string]$Output)
 $ErrorActionPreference='Stop'
 if(Test-Path -LiteralPath $Output){throw 'Output must be new.'}
+$m=Get-Content (Join-Path $Reference 'manifest.json') -Raw|ConvertFrom-Json
+if($m.captureVersion -ne '0.1.4'){throw 'Terrain sector validation requires capture 0.1.4 with the authored catalog.'}
 $Output=[IO.Path]::GetFullPath($Output);$Bootstrap=[IO.Path]::GetFullPath($Bootstrap)
 $Mono=[IO.Path]::GetFullPath($Mono);$repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $bytes=[IO.File]::ReadAllBytes($Mono);$pe=[BitConverter]::ToInt32($bytes,60)
@@ -25,6 +27,6 @@ try {
     $expected=(Get-Content (Join-Path $Reference 'effective-settings.txt') -Raw).Replace("`r`n","`n").Trim()
     $actual=(Get-Content (Join-Path $Output 'terrain/effective-settings.txt') -Raw).Replace("`r`n","`n").Trim()
     if($actual -cne $expected){throw 'Effective settings mismatch; pilot not accepted.'}
-    [pscustomobject]@{Status='pilot-complete-not-global-terrain-parity';MonoSha256=(Get-FileHash $Mono).Hash;WorkerSha256=(Get-FileHash $worker).Hash;Options='--optimize=-float32';Bootstrap=$records;ReferenceManifestSha256=(Get-FileHash (Join-Path $Reference 'manifest.json')).Hash;Build='Actual HeightmapBuilder.Build synchronously; no background builder thread'}|ConvertTo-Json -Depth 7|Set-Content (Join-Path $Output 'terrain-run.json')
+    [pscustomobject]@{Status='pilot-and-sectors-complete-not-global-terrain-parity';MonoSha256=(Get-FileHash $Mono).Hash;WorkerSha256=(Get-FileHash $worker).Hash;JsonReaderSha256=(Get-FileHash (Join-Path $repo 'tools/seed-previewer/.local/libs/Newtonsoft.Json.dll')).Hash;Options='--optimize=-float32';Bootstrap=$records;ReferenceManifestSha256=(Get-FileHash (Join-Path $Reference 'manifest.json')).Hash;BiomeContextSha256=$m.biomeContextSha256;SectorOutputSha256=(Get-FileHash (Join-Path $Output 'terrain/world-sectors.json')).Hash;SectorComparisonSha256=(Get-FileHash (Join-Path $Output 'terrain/sector-comparison.json')).Hash;DebugBuildFlag=$false;Build='Actual sector generation with authored catalog, then HeightmapBuilder.Build synchronously; no cache/save wrapper or background builder thread'}|ConvertTo-Json -Depth 7|Set-Content (Join-Path $Output 'terrain-run.json')
     Get-Content (Join-Path $Output 'terrain/terrain-comparison.json')
 } finally {$env:MONO_PATH=$old}

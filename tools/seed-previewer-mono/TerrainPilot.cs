@@ -15,12 +15,19 @@ static class TerrainPilot
         var harmonyType=typeof(BC).GetField("HarmonyInstance",All).FieldType;
         var harmony=Activator.CreateInstance(harmonyType,new object[]{"BetterContinents.Harmony"});
         typeof(BC).GetField("HarmonyInstance",All).SetValue(null,harmony);
-        var processor=harmonyType.GetMethod("CreateClassProcessor",new[]{typeof(Type)}).Invoke(harmony,new object[]{typeof(BC.WorldGeneratorPatch)});
-        processor.GetType().GetMethod("Patch",Type.EmptyTypes).Invoke(processor,null);
+        foreach(var patch in new[]{typeof(BC.WorldGeneratorPatch),typeof(BC).GetNestedType("AltBiomeControlPatch",All),typeof(BC).GetNestedType("BiomeSectorCanAddModifierPatch",All),typeof(BC).GetNestedType("WorldGeneratorBiomeSectorPatch",All)}){
+            if(patch==null)throw new TypeLoadException("Required terrain patch missing.");
+            var processor=harmonyType.GetMethod("CreateClassProcessor",new[]{typeof(Type)}).Invoke(harmony,new object[]{patch});
+            processor.GetType().GetMethod("Patch",Type.EmptyTypes).Invoke(processor,null);
+        }
         BC.DynamicPatch();
+        var wanted=(System.Collections.Generic.IEnumerable<string>)typeof(BC).GetMethod("WantedToggles",All).Invoke(null,new object[]{BC.Settings});
+        File.WriteAllLines(Path.Combine(args[4],"wanted-patches.txt"),wanted);
         typeof(World).GetField("m_worldGenVersion",All).SetValue(world,2);
         WorldGenerator.Initialize(world);
         var generator=WorldGenerator.instance;
+        if(!BiomeContext.InitializeAndCompare(world,generator,args[5],args[4]))return 2;
+        File.WriteAllText(Path.Combine(args[4],"terrain-context.json"),SeedPreviewerReference.ReferenceJson.Serialize(new{sectorDataPresent=world.m_biomeData!=null,sectorDataReady=world.m_biomeData!=null&&world.m_biomeData.IsReady,hasBetterContinentsLakes=BC.Settings.HasLakes,limitation="Authored catalog imported; sector assignments generated offline and compared. Full terrain-map acceptance remains pending."}));
         var builder=(HeightmapBuilder)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(HeightmapBuilder));
         var build=typeof(HeightmapBuilder).GetMethod("Build",All);
         try {

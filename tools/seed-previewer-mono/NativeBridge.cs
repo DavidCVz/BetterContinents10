@@ -12,6 +12,9 @@ public static class NativeBridge
     public static float RangeFloat(float a,float b)=>random.Range(a,b);
     public static float Value()=>random.Value();
     public static float Perlin(float x,float y)=>UnityPerlinCandidate.Normalized(x,y,true,true);
+    // Standalone diagnostic environment: ZLog.DevLog's development-player messages
+    // are disabled. This flag supplies no terrain or randomness values.
+    public static bool IsDebugBuild()=>false;
     public static void GetState(out UnityEngine.Random.State state){object boxed=new UnityEngine.Random.State();var words=random.SaveState();for(int i=0;i<4;i++)fields[i].SetValue(boxed,unchecked((int)words[i]));state=(UnityEngine.Random.State)boxed;}
     public static void SetState(ref UnityEngine.Random.State state){object boxed=state;var words=new uint[4];for(int i=0;i<4;i++)words[i]=unchecked((uint)(int)fields[i].GetValue(boxed));random.RestoreState(words);}
 }

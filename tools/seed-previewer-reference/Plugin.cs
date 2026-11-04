@@ -13,7 +13,7 @@ using BC = BetterContinents.BetterContinents;
 namespace SeedPreviewerReference
 {
     // Development only. No terrain patches, world creation, saves, or automatic captures.
-    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.1.3")]
+    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.1.4")]
     [BepInDependency("BetterContinents")]
     public sealed class Plugin : BaseUnityPlugin
     {
@@ -55,6 +55,7 @@ namespace SeedPreviewerReference
                 var settings = new List<string>();
                 BC.Settings.Dump(settings.Add);
                 File.WriteAllLines(Path.Combine(output, "effective-settings.txt"), settings);
+                File.WriteAllText(Path.Combine(output,"biome-context.json"),ReferenceJson.Serialize(BiomeContextReference.Capture(world,generator)));
                 File.WriteAllText(Path.Combine(output,"native-primitives.json"),ReferenceJson.Serialize(NativeReference.Capture()));
                 var probes = new List<object>();
                 foreach (float x in new[] { -1000.25f, 0.125f, 53.875f })
@@ -112,7 +113,8 @@ namespace SeedPreviewerReference
                     pointsSha256 = Hash(Path.Combine(output, "points.tsv")),
                     precisionSha256 = Hash(Path.Combine(output, "precision-trace.json")),
                     nativeSha256 = Hash(Path.Combine(output,"native-primitives.json")),
-                    captureVersion = "0.1.3",
+                    biomeContextSha256 = Hash(Path.Combine(output,"biome-context.json")),
+                    captureVersion = "0.1.4",
                     coordinates = "Explicit X/Z metres; zone nodes row-major +X, then +Z; surface from HeightmapBuilder, no player terrain edits",
                     water = "Ocean baseline in native-primitives.json; per-point volume coverage and water parity remain pending.",
                     perlin = probes, random,
@@ -120,7 +122,7 @@ namespace SeedPreviewerReference
                     plugins = BepInEx.Bootstrap.Chainloader.PluginInfos.Values.Select(p => new { guid = p.Metadata.GUID, version = p.Metadata.Version.ToString() }).ToArray()
                 }));
                 Logger.LogInfo("Reference pilot captured. Output is under BepInEx/seed-previewer-reference. Review before sharing.");
-                if (global::Console.instance != null) global::Console.instance.Print("Reference pilot captured (precision and native probes included).");
+                if (global::Console.instance != null) global::Console.instance.Print("Reference pilot captured (biome context included).");
             }
             finally { busy = false; }
         }

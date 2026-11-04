@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion></PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json"><HintPath>../seed-previewer/.local/libs/Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
     <Compile Include="../seed-previewer/PrecisionTrace.cs" Link="PrecisionTrace.cs" />
     <Compile Include="../seed-previewer-reference/ReferenceJson.cs" Link="ReferenceJson.cs" />
     <Reference Include="BetterContinents"><HintPath>../../obj/Release/net4.8/BetterContinents.dll</HintPath><Private>false</Private></Reference>
