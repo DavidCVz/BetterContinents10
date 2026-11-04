@@ -3,8 +3,11 @@ $ErrorActionPreference='Stop'
 if(Test-Path -LiteralPath $Output){throw 'Output must be new.'}
 $Output=[IO.Path]::GetFullPath($Output)
 $m=Get-Content -LiteralPath (Join-Path $Reference 'manifest.json') -Raw|ConvertFrom-Json
-if($m.format -ne 'sp-reference-pilot/1' -or $m.captureVersion -notin @('0.1.3','0.1.4')){throw 'Expected native capture 0.1.3 or 0.1.4.'}
-if($m.captureVersion -eq '0.1.4' -and (Get-FileHash (Join-Path $Reference 'biome-context.json')).Hash -ne $m.biomeContextSha256){throw 'Biome context integrity failure.'}
+if($m.format -ne 'sp-reference-pilot/1' -or $m.captureVersion -notin @('0.1.3','0.1.4','0.1.5')){throw 'Expected native capture 0.1.3, 0.1.4 or 0.1.5.'}
+if($m.captureVersion -in @('0.1.4','0.1.5') -and (Get-FileHash (Join-Path $Reference 'biome-context.json')).Hash -ne $m.biomeContextSha256){throw 'Biome context integrity failure.'}
+if($m.captureVersion -eq '0.1.5'){
+    foreach($e in @(@('fractional-points.tsv','fractionalSha256'),@('mesh-triangles.i32','topologySha256'))){if((Get-FileHash (Join-Path $Reference $e[0])).Hash -ne $m.($e[1])){throw 'Fractional reference integrity failure.'}}
+}
 foreach($entry in @(@('native-primitives.json','nativeSha256'),@('points.tsv','pointsSha256'),@('effective-settings.txt','settingsSha256'),@('precision-trace.json','precisionSha256'))){
     if((Get-FileHash -LiteralPath (Join-Path $Reference $entry[0])).Hash -ne $m.($entry[1])){throw 'Reference integrity failure.'}
 }

@@ -13,7 +13,7 @@ using BC = BetterContinents.BetterContinents;
 namespace SeedPreviewerReference
 {
     // Development only. No terrain patches, world creation, saves, or automatic captures.
-    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.1.4")]
+    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.1.5")]
     [BepInDependency("BetterContinents")]
     public sealed class Plugin : BaseUnityPlugin
     {
@@ -83,8 +83,11 @@ namespace SeedPreviewerReference
                     typeof(WorldGenerator).GetMethod("GetBaseHeight", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic));
                 File.WriteAllText(Path.Combine(output, "precision-trace.json"), ReferenceJson.Serialize(
                     SeedPreviewerDiagnostics.PrecisionTrace.Capture((x, z) => baseHeight(x, z, false))));
+                var topology=FractionalReference.CaptureTopology(output);
+                using (var fractions=new StreamWriter(Path.Combine(output,"fractional-points.tsv")))
                 using (var writer = new StreamWriter(Path.Combine(output, "points.tsv")))
                 {
+                    fractions.WriteLine("zoneX\tzoneZ\tx\tz\tbiome\tsurfaceMetres\tbelowOceanPlane");
                     writer.WriteLine("zoneX\tzoneZ\tx\tz\tbaseHeightNormalized\tbiome\tsurfaceMetres");
                     foreach (var zone in zones)
                     {
@@ -100,6 +103,7 @@ namespace SeedPreviewerReference
                             writer.WriteLine(string.Join("\t", zone.x, zone.y, F(x), F(z), F(baseHeight(x, z, false)),
                                 (int)generator.GetBiome(x, z), F(data.m_baseHeights[row * 65 + col])));
                         }
+                        FractionalReference.WriteZone(fractions,topology,zone,data,generator,ZoneSystem.instance.m_waterLevel);
                         yield return null;
                     }
                 }
@@ -114,7 +118,10 @@ namespace SeedPreviewerReference
                     precisionSha256 = Hash(Path.Combine(output, "precision-trace.json")),
                     nativeSha256 = Hash(Path.Combine(output,"native-primitives.json")),
                     biomeContextSha256 = Hash(Path.Combine(output,"biome-context.json")),
-                    captureVersion = "0.1.4",
+                    captureVersion = "0.1.5",
+                    fractionalSha256=Hash(Path.Combine(output,"fractional-points.tsv")),
+                    topologySha256=Hash(Path.Combine(output,"mesh-triangles.i32")),
+                    fractionalContract="Unedited non-LOD builder grid; actual loaded collision topology; Unity Plane.Raycast per containing triangle. Static ocean plane only; no physics raycast, scene volume coverage or player edits.",
                     coordinates = "Explicit X/Z metres; zone nodes row-major +X, then +Z; surface from HeightmapBuilder, no player terrain edits",
                     water = "Ocean baseline in native-primitives.json; per-point volume coverage and water parity remain pending.",
                     perlin = probes, random,
@@ -122,7 +129,7 @@ namespace SeedPreviewerReference
                     plugins = BepInEx.Bootstrap.Chainloader.PluginInfos.Values.Select(p => new { guid = p.Metadata.GUID, version = p.Metadata.Version.ToString() }).ToArray()
                 }));
                 Logger.LogInfo("Reference pilot captured. Output is under BepInEx/seed-previewer-reference. Review before sharing.");
-                if (global::Console.instance != null) global::Console.instance.Print("Reference pilot captured (biome context included).");
+                if (global::Console.instance != null) global::Console.instance.Print("Reference pilot captured (fractional mesh included).");
             }
             finally { busy = false; }
         }

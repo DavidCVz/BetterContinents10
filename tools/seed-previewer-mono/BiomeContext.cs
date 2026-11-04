@@ -21,7 +21,7 @@ static class BiomeContext
         if(float.IsNaN(value)||float.IsInfinity(value)||Bits((float)token["value"])!=bits)throw new InvalidDataException("Catalog float bits/value mismatch.");
         return value;
     }
-    public static bool InitializeAndCompare(World world,WorldGenerator generator,string reference,string output)
+    public static bool InitializeAndCompare(World world,WorldGenerator generator,string reference,string output,bool compare=true)
     {
         var context=JObject.Parse(File.ReadAllText(Path.Combine(reference,"biome-context.json")));
         if((string)context["format"]!="sp-biome-context/1"||!(bool)context["worldData"]["ready"])throw new InvalidDataException("Ready biome-context reference required.");
@@ -59,6 +59,7 @@ static class BiomeContext
         var actual=world.m_biomeData.Sectors.Select(s=>new{biome=(int)s.Biome,centerX=F(s.Center.x),centerY=F(s.Center.y),minX=F(s.Min.x),minY=F(s.Min.y),maxX=F(s.Max.x),maxY=F(s.Max.y),edgeCount=s.EdgeCount,altNames=s.AltBiomes.Select(a=>a.m_name).ToArray(),heightMin=F(s.HeightMin),heightMax=F(s.HeightMax),heightAverage=F(s.HeightAvg)}).ToArray();
         var array=JArray.Parse(SeedPreviewerReference.ReferenceJson.Serialize(actual));
         File.WriteAllText(Path.Combine(output,"world-sectors.json"),array.ToString());
+        if(!compare)return true; // Other seeds/presets import assets, never expected assignments.
         var expectedSectors=(JArray)context["worldSectors"];
         int sectorDifferences=Math.Abs(array.Count-expectedSectors.Count);
         var differences=new List<string>();

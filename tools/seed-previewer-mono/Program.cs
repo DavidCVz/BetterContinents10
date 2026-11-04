@@ -14,6 +14,7 @@ using BC=BetterContinents.BetterContinents;
 static class Entry
 {
     static bool terrainMode;
+    static bool mapMode;
     const BindingFlags All=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static|BindingFlags.Instance;
     static int Main(string[] args)
     {
@@ -21,6 +22,7 @@ static class Entry
             if(args.Length==5&&args[0]=="--verify-gap") {TerrainProcessSafety.DisableCrashDialogs();return GapCompatibility.Run(args[1],args[2],args[3],args[4]);}
             if(args.Length==3 && args[0]=="--verify-native")return NativeCandidateVerification.Run(args[1],args[2]);
             if(args.Length==8&&args[7]=="--terrain-pilot"){TerrainProcessSafety.DisableCrashDialogs();terrainMode=true;args=args.Take(7).ToArray();}
+            if(args.Length==8&&args[7]=="--terrain-map"){TerrainProcessSafety.DisableCrashDialogs();mapMode=true;args=args.Take(7).ToArray();}
             if(args.Length!=5 && args.Length!=6 && args.Length!=7) throw new ArgumentException("Expected repo, bootstrap directory, preset name, seed, new output directory, optional pilot directory.");
             args[0]=Path.GetFullPath(args[0]); args[1]=Path.GetFullPath(args[1]); args[4]=Path.GetFullPath(args[4]);
             if(!new[]{"Continents","Pangaea","Swirls","Vanillaish"}.Contains(args[2]) || args[3].Length<1 || args[3].Length>10 || !args[3].All(c=>c<128&&char.IsLetterOrDigit(c))) throw new ArgumentException("Unsupported preset or seed.");
@@ -72,6 +74,7 @@ static class Entry
         typeof(WorldGenerator).GetMethod("VersionSetup",All).Invoke(setup,new object[]{2});
         if((float)mountainField.GetValue(setup)!=1000f)throw new Exception("Unexpected version setup.");
         if(terrainMode)return TerrainPilot.Run(world,args);
+        if(mapMode)return SparseSurface.Generate(world,args);
         File.WriteAllText(Path.Combine(args[4],"precision-trace.json"),SeedPreviewerReference.ReferenceJson.Serialize(SeedPreviewerDiagnostics.PrecisionTrace.Capture((x,z)=>Height(x,z))));
         BranchChecks(args[4]);
         int differences=0,points=0;

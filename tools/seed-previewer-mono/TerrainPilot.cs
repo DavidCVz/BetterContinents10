@@ -10,7 +10,14 @@ static class TerrainPilot
     const BindingFlags All=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static|BindingFlags.Instance;
     public static int Run(World world,string[] args)
     {
+        var generator=Initialize(world,args);
+        if(!BiomeContext.InitializeAndCompare(world,generator,args[5],args[4]))return 2;
+        return Compare(generator,world,args);
+    }
+    internal static WorldGenerator Initialize(World world,string[] args)
+    {
         if(IntPtr.Size!=8)throw new NotSupportedException("Terrain detours require a verified x64 Mono runtime; the x86 instance-double ABI failed isolation tests.");
+        MeshSurface.CheckGeometry();
         if(args.Length<6||args[5]=="-")throw new ArgumentException("Terrain pilot requires a reference directory.");
         var harmonyType=typeof(BC).GetField("HarmonyInstance",All).FieldType;
         var harmony=Activator.CreateInstance(harmonyType,new object[]{"BetterContinents.Harmony"});
@@ -26,7 +33,10 @@ static class TerrainPilot
         typeof(World).GetField("m_worldGenVersion",All).SetValue(world,2);
         WorldGenerator.Initialize(world);
         var generator=WorldGenerator.instance;
-        if(!BiomeContext.InitializeAndCompare(world,generator,args[5],args[4]))return 2;
+        return generator;
+    }
+    static int Compare(WorldGenerator generator,World world,string[] args)
+    {
         File.WriteAllText(Path.Combine(args[4],"terrain-context.json"),SeedPreviewerReference.ReferenceJson.Serialize(new{sectorDataPresent=world.m_biomeData!=null,sectorDataReady=world.m_biomeData!=null&&world.m_biomeData.IsReady,hasBetterContinentsLakes=BC.Settings.HasLakes,limitation="Authored catalog imported; sector assignments generated offline and compared. Full terrain-map acceptance remains pending."}));
         var builder=(HeightmapBuilder)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(HeightmapBuilder));
         var build=typeof(HeightmapBuilder).GetMethod("Build",All);
@@ -34,6 +44,7 @@ static class TerrainPilot
             var zones=new[]{new Vector2s(0,0),new Vector2s(16,-7),new Vector2s(-83,59)};
             var data=new System.Collections.Generic.Dictionary<string,HeightmapBuilder.HMBuildData>();
             foreach(var zone in zones){var centre=new UnityEngine.Vector3(zone.x*64,0,zone.y*64);var request=new HeightmapBuilder.HMBuildData(centre,64,1f,false,generator);build.Invoke(builder,new object[]{request});data.Add(zone.x+","+zone.y,request);}
+            SparseSurface.Verify(generator,data,args[4]);
             int points=0,biomeDifferences=0;double max=0,sum=0;
             using(var writer=new StreamWriter(Path.Combine(args[4],"terrain-pilot.tsv"))){
                 writer.WriteLine("zoneX\tzoneZ\tx\tz\tbiome\tsurfaceMetres\terrorMetres");
@@ -46,6 +57,8 @@ static class TerrainPilot
                 }
             }
             File.WriteAllText(Path.Combine(args[4],"terrain-comparison.json"),SeedPreviewerReference.ReferenceJson.Serialize(new{points,biomeDifferences,maxSurfaceErrorMetres=max,meanSurfaceErrorMetres=sum/points,status="terrain-pilot-diagnostic-not-global-acceptance"}));
+            MeshSurface.ExportPatches(args[4],data,generator);
+            if(File.Exists(Path.Combine(args[5],"fractional-points.tsv"))&&!MeshSurface.Compare(args[5],args[4],data,generator))return 2;
             System.Console.WriteLine("TERRAIN points="+points+" biomeDifferences="+biomeDifferences+" maxSurfaceError="+max.ToString("R",CultureInfo.InvariantCulture));
             return biomeDifferences==0&&max<=0.1?0:2;
         } finally { /* Build is invoked synchronously; no builder thread was started. */ }

@@ -2,6 +2,67 @@
 
 ## Experimental F03 terrain pilot
 
+### Complete offline maps
+
+Build both the Mono worker and ../seed-previewer image renderer first, with
+the original dependencies prepared. Run with the same verified x64 runtime,
+terrain bootstrap and 0.1.5 reference used for the pilot:
+
+```powershell
+./Run-TerrainMap.ps1 -Mono path/to/mono-x64/bin/mono.exe -Bootstrap .local/new-terrain -Reference path/to/capture-0.1.5 -Preset Continents -Seed AbC123 -Resolution 1024 -Output .local/new-map
+./Verify-TerrainMaps.ps1 -Mono path/to/mono-x64/bin/mono.exe -Bootstrap .local/new-terrain -Reference path/to/capture-0.1.5 -Output .local/new-matrix
+```
+
+Run-TerrainMap first runs the complete matching pilot gate, then generates a
+fresh world for the requested seed/preset using only the captured authored
+catalog, never captured assignments or heights. SparseSurface evaluates the
+needed 1m vertices using real GetBiomeHeight and DUtils helpers, preserving the
+original builder's corner-biome blend. It checks bitwise equality against real
+HeightmapBuilder meshes before every map, including modified/distant sectors.
+The original assembly_valheim is unchanged. Cache lifetime is bounded by zone
+rows. No game process, cache wrapper, world save or builder thread is needed.
+
+The map directory contains surface.f32 metres, biomes.i32 flags, below-ocean.u8,
+three PNG previews, palette/encoding metadata, effective settings and sector
+summaries. All are north-first pixel centers across BC.TotalSize. Surface PNG
+is autoscaled L16 for inspection; the f32 file preserves metres. Biome PNG uses
+documented categorical colors (unknown flags magenta); water PNG is white below
+the static 30m plane. Lakes are explicitly unsupported. The final manifest is
+published only after native checks, finite output and rendering pass, with
+hashes of every map file and input provenance through the pilot gate.
+
+Verify-TerrainMaps generates four presets x three seeds x two processes at 1024²,
+two isolated child jobs at a time, and compares numeric layers, PNGs, settings
+and sector summaries. Numbered seed slots preserve AbC123/abc123 on Windows.
+It requires twelve distinct surface maps. Timings are recorded separately for
+initialization and sampling; timing fields are not determinism targets. This
+is offline repeatability, not full-map validation against the game or F04.
+
+The verified campaign completed all 24 runs: twelve distinct maps, identical
+pairs, and 1,926,600 native-builder vertex checks with zero bit differences.
+All 360 files listed in the map manifests passed final hash validation. This
+fulfills F03/CA-04 for the tested build and presets, while global fidelity,
+coastal/transition reference coverage and formal performance remain in F04.
+
+`MeshSurface` samples the unedited non-LOD 1m mesh triangles: SW/NW/SE and
+SE/NW/NE. Heightmap.GetWorldHeight selects a vertex, and continuous biome-height
+evaluation/bilinear interpolation are different contracts. A non-coplanar cell
+check covers both triangles, their diagonal, the outer node and invalid input.
+Each run exports three local 128x128 patches at 0.5m pixel centers, north first:
+surface.f32 metres, biomes.i32 flags, below-ocean.u8 (1 below 30m), little-endian.
+Layer metadata and hashes are in layers.json and mesh-layers.json. Lakes are
+rejected. These are candidate local raster layers, not twelve full-world maps.
+
+Capture 0.1.5 adds actual triangle indices and 61,440 fractional Unity plane
+samples. Verify-Native checks their hashes; MeshSurface verifies every index,
+compares biome/surface and static ocean classification (excluding +/-0.10m
+around the reference plane). The surface threshold remains 0.10m. Comparison
+must pass before the runner publishes its final success manifest. A 0.1.4 run
+remains supported and explicitly labels its mesh layers as awaiting a fractional
+reference. The directed 0.1.5 test passed 61,440 samples: maximum surface error
+0.00070953369140625m, zero biome/water differences; topology exact. Repeated
+outputs match. Altered topology or surface with recomputed hashes is rejected.
+
 Capture 0.1.4 supplies the authored alt-biome catalog and independent live sector
 reference. BiomeContext imports only authored scalar/enum/string values, registers
 the mod's sector patches, and runs GenerateBiomePoints/GenerateSectors including
@@ -10,9 +71,8 @@ including 37 modified sectors, and 12,675 pilot sector lookups match exactly.
 Reference heights or sector assignments are never installed in the generator.
 `terrain-context.json` records readiness, and `sector-comparison.json` records
 the comparison. This replaces the earlier prototype's empty-sector fallback.
-TerrainRow in WorldExport provides a non-LOD blending model; arbitrary raster
-centers also need an explicit
-mesh-versus-continuous-surface contract before exporting a final-surface layer.
+TerrainRow in WorldExport provides a continuous non-LOD blending model. The
+surface contract above evaluates actual 1m vertices and then mesh triangles.
 
 The terrain detours require **x64 Mono**. The Unity Editor's bundled mono.exe
 tested for F02 is x86; instance methods returning double fail with Harmony under
@@ -42,9 +102,9 @@ ZLog.DevLog diagnostics in modifier placement; it supplies no terrain values.
 It uses original game formulas and the real WorldGeneratorPatch/DynamicPatch paths,
 and invokes actual HeightmapBuilder.Build synchronously with its real request
 constructor. It does not start the builder thread or reproduce its blend formula.
-Two runs match all 12,675 pilot biomes and surface values exactly. This is a pilot,
-not CA-04/global parity acceptance: full static-patch coverage, twelve-map output
-and water classification remain pending. Logs still contain unresolved Quaternion
+Two runs match all 12,675 pilot biomes and surface values exactly. Complete-map
+exports and their repetition are handled separately above; global game parity
+remains pending. Logs still contain unresolved Quaternion
 binding warnings while vegetation patch methods are prepared; these are not
 silenced with synthetic rotations and must be addressed if a required path uses them.
 Native failures in experimental modes retain logs/exit codes without Windows

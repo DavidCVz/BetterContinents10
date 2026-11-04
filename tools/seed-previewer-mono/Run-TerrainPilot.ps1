@@ -2,7 +2,7 @@ param([Parameter(Mandatory)][string]$Mono,[Parameter(Mandatory)][string]$Bootstr
 $ErrorActionPreference='Stop'
 if(Test-Path -LiteralPath $Output){throw 'Output must be new.'}
 $m=Get-Content (Join-Path $Reference 'manifest.json') -Raw|ConvertFrom-Json
-if($m.captureVersion -ne '0.1.4'){throw 'Terrain sector validation requires capture 0.1.4 with the authored catalog.'}
+if($m.captureVersion -notin @('0.1.4','0.1.5')){throw 'Terrain sector validation requires capture 0.1.4 or 0.1.5 with the authored catalog.'}
 $Output=[IO.Path]::GetFullPath($Output);$Bootstrap=[IO.Path]::GetFullPath($Bootstrap)
 $Mono=[IO.Path]::GetFullPath($Mono);$repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $bytes=[IO.File]::ReadAllBytes($Mono);$pe=[BitConverter]::ToInt32($bytes,60)
@@ -27,6 +27,10 @@ try {
     $expected=(Get-Content (Join-Path $Reference 'effective-settings.txt') -Raw).Replace("`r`n","`n").Trim()
     $actual=(Get-Content (Join-Path $Output 'terrain/effective-settings.txt') -Raw).Replace("`r`n","`n").Trim()
     if($actual -cne $expected){throw 'Effective settings mismatch; pilot not accepted.'}
+    $fractional=Join-Path $Output 'terrain/fractional-comparison.json'
+    if($m.captureVersion -eq '0.1.5' -and !(Test-Path $fractional)){throw 'Missing fractional comparison.'}
+    $layers=@(Get-ChildItem (Join-Path $Output 'terrain') -Directory -Filter 'patch-*'|ForEach-Object {Get-ChildItem -LiteralPath $_.FullName -File}|ForEach-Object {[pscustomobject]@{File=$_.Directory.Name+'/'+$_.Name;Sha256=(Get-FileHash $_.FullName).Hash}})
+    [pscustomobject]@{Status=if($m.captureVersion -eq '0.1.5'){'fractional-comparison-complete-not-global-acceptance'}else{'candidate-mesh-layers-awaiting-fractional-reference'};FractionalComparisonSha256=if(Test-Path $fractional){(Get-FileHash $fractional).Hash}else{$null};LayerFiles=$layers}|ConvertTo-Json -Depth 5|Set-Content (Join-Path $Output 'mesh-layers.json')
     [pscustomobject]@{Status='pilot-and-sectors-complete-not-global-terrain-parity';MonoSha256=(Get-FileHash $Mono).Hash;WorkerSha256=(Get-FileHash $worker).Hash;JsonReaderSha256=(Get-FileHash (Join-Path $repo 'tools/seed-previewer/.local/libs/Newtonsoft.Json.dll')).Hash;Options='--optimize=-float32';Bootstrap=$records;ReferenceManifestSha256=(Get-FileHash (Join-Path $Reference 'manifest.json')).Hash;BiomeContextSha256=$m.biomeContextSha256;SectorOutputSha256=(Get-FileHash (Join-Path $Output 'terrain/world-sectors.json')).Hash;SectorComparisonSha256=(Get-FileHash (Join-Path $Output 'terrain/sector-comparison.json')).Hash;DebugBuildFlag=$false;Build='Actual sector generation with authored catalog, then HeightmapBuilder.Build synchronously; no cache/save wrapper or background builder thread'}|ConvertTo-Json -Depth 7|Set-Content (Join-Path $Output 'terrain-run.json')
     Get-Content (Join-Path $Output 'terrain/terrain-comparison.json')
 } finally {$env:MONO_PATH=$old}

@@ -1,6 +1,21 @@
 # In-game reference pilot — development only
 
-Current extension **0.1.4** passed its directed game test. It adds
+Extension **0.1.5** passed the directed game test. The same command
+adds `mesh-triangles.i32` (actual loaded non-LOD collision mesh indices) and
+`fractional-points.tsv` (61,440 points in the three existing zones). Heights use
+Unity Plane.Raycast on triangles with original builder heights and captured
+topology; the offline sampler is not shared. This is a triangle-plane reference,
+not a PhysX/scene raycast. No temporary colliders, world edits or scene objects
+are created. Water is classification against the static ocean plane only.
+The loaded player heightmap must have 65x65 vertices; otherwise capture fails.
+Success prints `Reference pilot captured (fractional mesh included).`
+Both new files have hashes in the manifest. All 61,440 biome and static-ocean
+classifications match the offline triangle sampler. Maximum surface difference
+is 0.00070953369140625m (mean 0.000106117739947346m), within the existing 0.10m
+threshold. Actual indices match in every cell. These are three-zone geometric
+samples, not complete-world parity, PhysX or arbitrary water-volume coverage.
+
+Previous extension **0.1.4** passed its directed game test. It adds
 `biome-context.json` and its hash: authored scalar/enum/string alt-biome catalog,
 the 12,675 pilot sectors and their modifier names, readiness of the world's
 biome-sector data, and the ocean/prefab water planes with the lakes flag.

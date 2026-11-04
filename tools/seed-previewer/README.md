@@ -4,6 +4,11 @@ This console can read real presets (F01) or sample real V3 base height (F02).
 It does not start Valheim, save a world, or modify player saves/configuration.
 It is not yet a biome or final-surface previewer.
 
+The F03 terrain route now lives in `../seed-previewer-mono/Run-TerrainMap.ps1`.
+This executable also supplies `--render-terrain <map-directory>` for its PNG
+exports. See that tool's README for runtime/bootstrap/reference requirements,
+the sparse triangular surface contract and offline matrix verification.
+
 ## Requirements
 
 - Windows, .NET SDK/runtime 10 and .NET Framework 4.8 reference assemblies.
