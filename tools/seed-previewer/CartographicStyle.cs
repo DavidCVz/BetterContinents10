@@ -38,7 +38,7 @@ internal sealed class CartographicStyle
         }
         style.Validate();return style;
     }
-    static void CheckKeys(JsonElement node)
+    internal static void CheckKeys(JsonElement node)
     {
         if(node.ValueKind!=JsonValueKind.Object)return;
         var keys=new HashSet<string>(StringComparer.Ordinal);

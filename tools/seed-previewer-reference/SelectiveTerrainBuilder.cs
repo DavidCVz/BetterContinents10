@@ -65,7 +65,9 @@ namespace SeedPreviewerReference
             foreach(int y in new[]{0,1,31,32,63})foreach(int x in new[]{0,1,31,32,63}){
                 var selected=Request(builder,generator,zone,x,y);
                 foreach(int index in new[]{y*65+x,y*65+x+1,(y+1)*65+x,(y+1)*65+x+1}){
-                    if(BitConverter.ToInt32(BitConverter.GetBytes(selected.m_baseHeights[index]),0)!=BitConverter.ToInt32(BitConverter.GetBytes(full.m_baseHeights[index]),0))throw new InvalidDataException("Selective native builder differs from full builder.");count++;
+                    if(BitConverter.ToInt32(BitConverter.GetBytes(selected.m_baseHeights[index]),0)!=BitConverter.ToInt32(BitConverter.GetBytes(full.m_baseHeights[index]),0))throw new InvalidDataException("Selective native builder differs from full builder.");
+                    var a=selected.m_baseMask[index];var b=full.m_baseMask[index];
+                    foreach(var pair in new[]{new[]{a.r,b.r},new[]{a.g,b.g},new[]{a.b,b.b},new[]{a.a,b.a}})if(BitConverter.ToInt32(BitConverter.GetBytes(pair[0]),0)!=BitConverter.ToInt32(BitConverter.GetBytes(pair[1]),0))throw new InvalidDataException("Selective native mask differs from full builder.");count++;
                 }
             }
             return count;

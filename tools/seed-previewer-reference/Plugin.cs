@@ -13,7 +13,7 @@ using BC = BetterContinents.BetterContinents;
 namespace SeedPreviewerReference
 {
     // Development only. No terrain patches, world creation, saves, or automatic captures.
-    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.2.1")]
+    [BepInPlugin("local.seedpreviewer.reference", "Seed Previewer Reference", "0.5.0")]
     [BepInDependency("BetterContinents")]
     public sealed class Plugin : BaseUnityPlugin
     {
@@ -36,6 +36,24 @@ namespace SeedPreviewerReference
                     if(busy){Logger.LogWarning("Capture already running.");return;}
                     if((args.Length!=2&&args.Length!=3)||(args.Length==3&&args[2]!="full")||!new[]{"Continents","Pangaea","Swirls","Vanillaish"}.Contains(args[1])||WorldGenerator.instance==null||ZoneSystem.instance==null||!BC.Settings.ShapesWorld){Logger.LogWarning("Load a disposable test world and specify its preset (optional: full).");return;}
                     busy=true;cancelGlobal=false;StartCoroutine(GlobalReference.Capture(args[1],()=>cancelGlobal,()=>busy=false,args.Length==2));
+                });
+                new Terminal.ConsoleCommand("sp_reference_visual","Capture M2 visual fields in disposable Continents/AbC123",args=>{
+                    if(busy||WorldGenerator.instance==null||ZoneSystem.instance==null||!BC.Settings.ShapesWorld){Logger.LogWarning("Load a disposable test world; no capture may already be running.");return;}
+                    busy=true;StartCoroutine(VisualReference.Capture(()=>busy=false));
+                });
+                new Terminal.ConsoleCommand("sp_reference_style","Capture effective native minimap palette and basic material references",args=>{
+                    if(busy||Minimap.instance==null||WorldGenerator.instance==null){Logger.LogWarning("Load a disposable test world; no capture may already be running.");return;}
+                    busy=true;StartCoroutine(StyleReference.Capture(()=>busy=false,message=>Logger.LogError(message)));
+                });
+                new Terminal.ConsoleCommand("sp_reference_map", "Capture the native map and generated layers in SPF04C1", args =>
+                {
+                    if (busy)
+                    {
+                        global::Console.instance?.Print("A reference capture is already running.");
+                        return;
+                    }
+                    busy = true;
+                    StartCoroutine(NativeMapReference.Capture(() => busy = false, message => Logger.LogError(message)));
                 });
                 new Terminal.ConsoleCommand("sp_reference_cancel","Cancel the global reference capture",args=>cancelGlobal=true);
                 registered = true;

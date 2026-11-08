@@ -108,6 +108,70 @@ Use the same workspace-local NuGet/CLI cache as the preparation script if needed
 The only output to deploy for this tool is `bin/Release/net48/SeedPreviewerReference.dll`.
 It relies on the game's BepInEx and Better Continents; do not copy reference/game DLLs.
 
+## Native map palette / basic inventory (0.4.0, Plan 03 F02)
+
+Load the existing disposable `SPF04C1` world (AbC123) through Develop. Open the
+large map with M, then open F5 and run `sp_reference_style`. Keeping the large
+map visible helps observe its already-bound UI material; the capture does not
+force an update or change UI assignments. Wait for
+`Native map style captured: 9 biome colors, two stable reads.` before leaving.
+This capture reads state across two frames and does not generate terrain.
+
+Output: `BepInEx/seed-previewer-style-reference/<id>/`. palette.json records
+active fields, native GetPixelColor results, raw float bits, Unity Color32
+conversion and repeated observations. Conversion to bytes performs no explicit
+gamma transform; it is not a claim about the final shader color. The original
+constructor defaults are not substituted for active serialized field values.
+
+material-inventory.json records bounded basic references and properties from the
+two material fields, UI configured/first bound material when available, and the
+four generated input textures. Inventory entries may explicitly be unavailable
+or partial. No texture pixels, shader source or original asset bundles are
+exported. This is preparation for later resource analysis, not full extraction.
+
+manifest.json is published only after palette reads agree bit-for-bit and match
+the native method/field associations. Errors print a failure message and details
+go to the BepInEx log. Existing pilot/global/visual commands remain available.
+Only one capture may run at a time. The command neither assigns materials nor
+modifies generation, world saves or existing bundles. Native object IDs in the
+inventory identify objects only within that capture, not stable asset identities.
+
+`Verify-NativeStyle.ps1` checks source/probe/mod identities, hashes, native field
+associations, exact repeats, raw floats and the Color32 byte conversion. Supply
+`-Reference`, `-Repo`, expected probe/mod SHA256 values and a new `-Output`.
+It verifies a base palette; material coverage and final shader output require
+separate review. Synthetic validator fixtures are not in-game reference evidence.
+
+## Milestone 2 visual reference (0.3.0)
+
+With the Develop test profile, load the existing disposable `SPF04C1` world
+(Continents / `AbC123`) and run `sp_reference_visual` once in F5. Do not change
+world settings or switch worlds during capture. No travel or new world is needed.
+Wait for `Visual reference captured: N points.` before leaving the world.
+This capture is separate from `sp_reference_global`; do not rerun the 12 worlds.
+
+The capture selects real forest/material ranges from a 64x64 discovery scan and
+adds modified-sector centers. It stores float values/bits for forest factor,
+direct RGBA ground mask, four native 1m builder mask nodes around each explicit
+point, ordered variants/texture overrides and the native sector texture code.
+That code contains shader weights, not display RGB. A selective native builder
+copy is checked against 100 full-builder nodes for all RGBA bits and heights;
+the candidate mask formula is not used to produce reference observations.
+
+Output is under `BepInEx/seed-previewer-visual-reference/<unique-id>/` with
+settings, authored catalog/sector context, visual points and a success manifest.
+There is no successful manifest after failure. No automatic capture, world edits,
+teleports or generation patches are installed. Capture may take time; progress
+continues across frames. Errors are available in the BepInEx log. The world must
+actually be the stated preset; offline comparison checks settings/builds before
+acceptance. The preset label alone is not proof.
+
+Offline comparison: `../seed-previewer-mono/Compare-VisualReference.ps1` accepts
+the tested Mono/bootstrap, existing M1 fractional `-Pilot`, new `-Reference` and
+new `-Output`. It checks provenance and the M1 pilot before comparing raw values.
+This is a point-level gate; full raster fields, 12-world regression and artistic
+mapping remain pending until those observations pass.
+
 ## Pilot procedure
 
 1. Use a disposable test profile and a separate save directory with Valheim 1.0.21,

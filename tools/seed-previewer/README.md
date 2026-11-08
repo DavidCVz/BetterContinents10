@@ -1,5 +1,57 @@
 # Seed Previewer — offline probes and cartographic renderer
 
+## Measured visual controls (milestone 2 / F03)
+
+```powershell
+dotnet bin/Release/net10.0/SeedPreviewer.dll --render-map <M1-bundle> <new-output> --visual <visual-fields>
+# Optional independent recipes: --style <base-style.json> --visual-style <visual-style.json>
+```
+
+`sp-visual-fields/1` binds additional layers to the exact parent manifest and four
+source hashes. The renderer rejects another world/resolution/coordinate contract,
+missing provenance, damaged/truncated layers, non-finite values and unknown
+variant classes. Source files stay unchanged. `forest.f32` is the real patched
+GetForestFactor at each M1 pixel center (Y=0), not normalized tree density.
+`ground.rgba.f32` preserves all four raw procedural GetBiomeHeight mask channels
+at the same point and its categorical biome. Negative values remain in the raw
+data. `variants.i32` indexes ordered variant-name combinations queried through
+GetBiomeSector; categories are never interpolated.
+
+The point procedural ground control is distinct from the blended 1m terrain
+paint texture after quantization, player edits and GPU filtering. This map uses
+the former as a cartographic signal, not a rendered terrain-texture replica or a
+lava hazard map. The native reference separately checks direct masks and four
+native-builder mask nodes, without using the candidate's mask-blending formula.
+
+The 32 authored definitions in the validated catalog all have texture override
+None. The domain therefore has no alternate texture replacement to render;
+variant classes are retained as data. Nonzero overrides in another catalog are
+explicitly unsupported, not silently approximated or presented as tested.
+
+`sp-visual-style/1` has `forest`/`ground` toggles (default true), strengths
+forestStrength=0.35, mossStrength=0.65 and lavaStrength=0.9 (each 0-1), and opaque
+colors forestColor=#263E2C, mossColor=#71834A, lavaColor=#E76A25. Unknown/duplicate
+properties and invalid values fail; format is required in custom files.
+`visual-style-used.json` and all source hashes are recorded with the render.
+
+The continuous color transfer is our own: forest weight is clamped
+(1.15-factor)/0.6 in Meadows, (0.8-factor)/0.5 in Plains and (1.6-factor) in
+BlackForest. Other biomes receive no forest tint. Mistlands uses clamped mask
+alpha as ground cover; Ashlands uses clamped (alpha-0.5)*2 for warm material.
+These are documented artistic thresholds, not inferred tree positions, normalized
+source values or the game's collision/hazard thresholds. Water pixels receive
+no visual-control overlay. Disabling both channels reproduces the base PNG exactly:
+
+```json
+{"format":"sp-visual-style/1","forest":false,"ground":false}
+```
+
+`Verify-VisualRendering.ps1 -Bundle <Continents-bundle> -Fields <fields>
+-OtherBundle <Swirls-bundle> -Output <new-evidence>` checks separate-process
+repetition, decoded pixels, all ocean pixels, channel toggles, source preservation
+and invalid fields/styles. The existing F02 cartographic campaign remains valid.
+See the Mono worker README for native comparison and field export admission.
+
 ## Reproducible cartography (milestone 2 / F02)
 
 From this tool directory, after building:
@@ -65,8 +117,8 @@ deepRange 0.1-2000 m and shoreHeight 0.1-100 m. If `palette` is supplied, includ
 exactly IDs 1, 2, 4, 8, 16, 32, 64, 256 and 512; names/colors are in the legend.
 The other color fields are shallow, shelf, deep, sand, snow and background.
 
-This is **base terrain**: forest density, lava/moss masks and alt-biome visual
-overrides remain in milestone 2 / F03. Blended colors are presentation, not a
+Without `--visual`, this is **base terrain**. Measured controls can be supplied
+through milestone 2 / F03 above. Blended colors are presentation, not a
 categorical biome query or tree/object map. No decorative terrain noise is added.
 
 Verification (output must be new):

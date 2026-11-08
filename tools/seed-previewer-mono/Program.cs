@@ -16,12 +16,16 @@ static class Entry
     static bool terrainMode;
     static bool mapMode;
     static bool referenceMode;
+    static bool visualMode;
+    static string visualBundle;
     static readonly System.Diagnostics.Stopwatch startup=System.Diagnostics.Stopwatch.StartNew();
     internal static long ConfigurationMs;
     const BindingFlags All=BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static|BindingFlags.Instance;
     static int Main(string[] args)
     {
         try {
+            if(args.Length==9&&args[7]=="--visual-map"){TerrainProcessSafety.DisableCrashDialogs();visualBundle=Path.GetFullPath(args[8]);args=args.Take(7).ToArray();}
+            if(args.Length==8&&args[7]=="--visual-reference"){TerrainProcessSafety.DisableCrashDialogs();visualMode=true;args=args.Take(7).ToArray();}
             if(args.Length==5&&args[0]=="--verify-gap") {TerrainProcessSafety.DisableCrashDialogs();return GapCompatibility.Run(args[1],args[2],args[3],args[4]);}
             if(args.Length==3 && args[0]=="--verify-native")return NativeCandidateVerification.Run(args[1],args[2]);
             if(args.Length==8&&args[7]=="--terrain-pilot"){TerrainProcessSafety.DisableCrashDialogs();terrainMode=true;args=args.Take(7).ToArray();}
@@ -77,6 +81,8 @@ static class Entry
         var mountainField=typeof(WorldGenerator).GetField("m_minMountainDistance",All);mountainField.SetValue(setup,1000f);
         typeof(WorldGenerator).GetMethod("VersionSetup",All).Invoke(setup,new object[]{2});
         if((float)mountainField.GetValue(setup)!=1000f)throw new Exception("Unexpected version setup.");
+        if(visualBundle!=null)return VisualFields.Export(world,args,visualBundle);
+        if(visualMode)return VisualComparison.Run(world,args);
         if(terrainMode)return TerrainPilot.Run(world,args);
         if(mapMode){ConfigurationMs=startup.ElapsedMilliseconds;return SparseSurface.Generate(world,args);}
         if(referenceMode)return GlobalComparison.Run(world,args);

@@ -15,8 +15,10 @@ internal static class Program
             if(args.Length==1&&args[0]=="--check-cartographic-renderer")return CartographicChecks.Run();
             if(args.Length==4&&args[0]=="--check-cartographic-output")return CartographicChecks.CheckOutput(args[1],args[2],args[3]);
             if(args.Length>0&&args[0]=="--render-map"){
-                if(args.Length!=3&&(args.Length!=5||args[3]!="--style"))throw new ArgumentException("Usage: --render-map <M1-bundle-root> <new-output> [--style <style.json>]");
-                return CartographicRenderer.Run(args[1],args[2],args.Length==5?args[4]:null);
+                if(args.Length<3||(args.Length-3)%2!=0)throw new ArgumentException("Usage: --render-map <M1-bundle> <new-output> [--style file] [--visual fields] [--visual-style file]");
+                var options=new Dictionary<string,string>();for(int i=3;i<args.Length;i+=2)if(!new[]{"--style","--visual","--visual-style"}.Contains(args[i])||!options.TryAdd(args[i],args[i+1]))throw new ArgumentException("Invalid or duplicate render option.");
+                if(options.ContainsKey("--visual-style")&&!options.ContainsKey("--visual"))throw new ArgumentException("Visual style requires visual fields.");
+                return CartographicRenderer.Run(args[1],args[2],options.GetValueOrDefault("--style"),options.GetValueOrDefault("--visual"),options.GetValueOrDefault("--visual-style"));
             }
             if(args.Length==1&&args[0]=="--check-cartography")return CartographicSample.CheckGeometry();
             if(args.Length==3&&args[0]=="--render-map-sample")return CartographicSample.Run(args[1],args[2]);

@@ -261,3 +261,37 @@ in-game reference measurements for those branches.
 Generated evidence may contain local paths. Keep it under `.local/` or outside
 the repository and review it before sharing. The bootstrap directory is required
 at runtime; the original game files remain unchanged.
+## Milestone 2 / F03 visual controls
+
+Build the worker and reference projects with the existing local dependencies.
+Capture 0.3.0 supplies `sp_reference_visual` in disposable Continents/AbC123.
+Keep the original M1 fractional pilot as a separate gate:
+
+```powershell
+./Compare-VisualReference.ps1 -Mono $Mono -Bootstrap $Bootstrap -Pilot <M1-pilot> -Reference <visual-capture> -Output <new-comparison>
+./Export-VisualFields.ps1 -Mono $Mono -Bootstrap $Bootstrap -Reference <visual-capture> -Comparison <successful-comparison> -Bundle <existing-M1-bundle> -Output <new-fields>
+```
+
+Export requires a successful comparison by the **current worker hash**, the same
+native-reference manifest, runtime and bootstrap identities. It imports authored
+catalog definitions only and generates sectors through the existing path. It
+samples actual forest factor and raw procedural ground RGBA at M1 pixel centers,
+checks every generated categorical biome against the parent and preserves ordered
+variant-name combinations. Parent hashes are checked before and after export.
+It never overwrites the parent or recalculates its heights/water files.
+
+`visual-manifest.json` identifies format `sp-visual-fields/1`, geometry, source and
+layer hashes, authored context, worker/runtime/comparison provenance, class table
+and the exact point-procedural sampling contract. The current domain requires
+all 32 authored texture overrides to be None; other catalogs fail explicitly.
+Ground controls are raw floats before texture upload/quantization/edits/GPU
+filtering, not reconstructed final terrain paint. Consumer-side color mapping is
+documented separately in the .NET renderer README.
+
+`Verify-VisualFields.ps1` accepts the same runtime/bootstrap/reference/comparison,
+`-Pilot`, `-Matrix` with the 12 M1 baseline bundles and a new `-Output`. It exports
+fields and re-executes the existing terrain-map route once for every case,
+requiring all 36 original numeric layer hashes and native/sparse vertex audits
+to match. It records progress, not a final success marker, until all cases pass.
+Field repeatability is checked on raw layers; timing metadata may differ between
+exports. Rendering never invokes this worker. No game DLL is redistributed.
